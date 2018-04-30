@@ -2,6 +2,9 @@
 .env
 coverage.json
 
+# Contracts builds
+build/contracts/*.json
+
 # Logs
 logs
 *.log
