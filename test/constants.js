@@ -1,0 +1,1 @@
+export const ether = 10 ** 18

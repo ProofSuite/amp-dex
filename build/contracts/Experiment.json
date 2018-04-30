@@ -1,0 +1,527 @@
+{
+  "contractName": "Experiment",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "components": [
+            {
+              "name": "a",
+              "type": "int256"
+            },
+            {
+              "name": "b",
+              "type": "int256"
+            }
+          ],
+          "name": "_data",
+          "type": "tuple"
+        }
+      ],
+      "name": "setData",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6060604052341561000f57600080fd5b6101998061001e6000396000f300606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063b6083a7514610046575b600080fd5b341561005157600080fd5b61006660046100619036906100ed565b610068565b005b8060008082015181600001556020820151816001015590505050565b60006100908235610155565b905092915050565b6000604082840312600181146100ad576100b2565b600080fd5b506100bd604061011f565b905060006100cd84828501610084565b60008301525060206100e184828501610084565b60208301525092915050565b60006040828403126001811461010257610107565b600080fd5b50600061011684828501610098565b91505092915050565b6000604051905081810181811067ffffffffffffffff821117600181146101455761014a565b600080fd5b508060405250919050565b60008190509190505600a265627a7a72305820c1f7f92e0060092c3487f2a714c1843cf8054a1a9f243c63a2ca124b366f41396c6578706572696d656e74616cf50037",
+  "deployedBytecode": "0x606060405260043610610041576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff168063b6083a7514610046575b600080fd5b341561005157600080fd5b61006660046100619036906100ed565b610068565b005b8060008082015181600001556020820151816001015590505050565b60006100908235610155565b905092915050565b6000604082840312600181146100ad576100b2565b600080fd5b506100bd604061011f565b905060006100cd84828501610084565b60008301525060206100e184828501610084565b60208301525092915050565b60006040828403126001811461010257610107565b600080fd5b50600061011684828501610098565b91505092915050565b6000604051905081810181811067ffffffffffffffff821117600181146101455761014a565b600080fd5b508060405250919050565b60008190509190505600a265627a7a72305820c1f7f92e0060092c3487f2a714c1843cf8054a1a9f243c63a2ca124b366f41396c6578706572696d656e74616cf50037",
+  "sourceMap": "35:155:3:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "35:155:3:-;;;;;;;;;;;;;;;;;;;;;;;;125:63;;;;;;;;;;;;;;;;;;;;;;;178:5;171:4;:12;;;;;;;;;;;;;;;;;;;125:63;:::o;5:116:-1:-;;71:45;108:6;95:12;71:45;;;62:54;;56:65;;;;;161:470;;280:4;268:9;263:3;259;255;291:1;286:23;;;;248:61;;286:23;305:1;302;295:6;248:61;;323:20;338:4;323:20;;;314:29;;390:1;421:48;465:3;456:6;445:9;441:3;421:48;;;415:3;408:5;404:3;397:6;353:128;528:2;561:48;605:3;596:6;585:9;581:3;561:48;;;554:4;547:5;543:3;536:6;491:130;242:389;;;;;638:304;;772:2;760:9;751:7;747:3;743;781:1;776:23;;;;736:63;;776:23;795:1;792;785:6;736:63;;830:1;847:79;918:7;909:6;898:9;894:3;847:79;;;837:89;;809:123;730:212;;;;;949:267;;1011:2;1005:5;995:19;;1049:4;1041:6;1037:3;1152:6;1140:10;1137:2;1116:18;1104:10;1101:2;1098;1166:1;1161:23;;;;1091:93;;1161:23;1180:1;1177;1170:6;1091:93;;1200:10;1196:2;1189:6;989:227;;;;;1223:78;;1291:5;1280:16;;1274:27;;;",
+  "source": "pragma experimental ABIEncoderV2;\n\ncontract Experiment {\n\n  struct MyStruct {\n    int a;\n    int b;\n  }\n\n  MyStruct data;\n\n  function setData(MyStruct _data) public {\n    data = _data;\n  }\n}",
+  "sourcePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/ProofDEX/contracts/utils/Experiment.sol",
+  "ast": {
+    "absolutePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/ProofDEX/contracts/utils/Experiment.sol",
+    "exportedSymbols": {
+      "Experiment": [
+        1312
+      ]
+    },
+    "id": 1313,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1294,
+        "literals": [
+          "experimental",
+          "ABIEncoderV2"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:33:3"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 1312,
+        "linearizedBaseContracts": [
+          1312
+        ],
+        "name": "Experiment",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "Experiment.MyStruct",
+            "id": 1299,
+            "members": [
+              {
+                "constant": false,
+                "id": 1296,
+                "name": "a",
+                "nodeType": "VariableDeclaration",
+                "scope": 1299,
+                "src": "82:5:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_int256",
+                  "typeString": "int256"
+                },
+                "typeName": {
+                  "id": 1295,
+                  "name": "int",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "82:3:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1298,
+                "name": "b",
+                "nodeType": "VariableDeclaration",
+                "scope": 1299,
+                "src": "93:5:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_int256",
+                  "typeString": "int256"
+                },
+                "typeName": {
+                  "id": 1297,
+                  "name": "int",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "93:3:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              }
+            ],
+            "name": "MyStruct",
+            "nodeType": "StructDefinition",
+            "scope": 1312,
+            "src": "60:43:3",
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "id": 1301,
+            "name": "data",
+            "nodeType": "VariableDeclaration",
+            "scope": 1312,
+            "src": "107:13:3",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_struct$_MyStruct_$1299_storage",
+              "typeString": "struct Experiment.MyStruct storage ref"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 1300,
+              "name": "MyStruct",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1299,
+              "src": "107:8:3",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_MyStruct_$1299_storage_ptr",
+                "typeString": "struct Experiment.MyStruct storage pointer"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 1310,
+              "nodeType": "Block",
+              "src": "165:23:3",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1308,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 1306,
+                      "name": "data",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1301,
+                      "src": "171:4:3",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MyStruct_$1299_storage",
+                        "typeString": "struct Experiment.MyStruct storage ref"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 1307,
+                      "name": "_data",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1303,
+                      "src": "178:5:3",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MyStruct_$1299_memory_ptr",
+                        "typeString": "struct Experiment.MyStruct memory"
+                      }
+                    },
+                    "src": "171:12:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MyStruct_$1299_storage",
+                      "typeString": "struct Experiment.MyStruct storage ref"
+                    }
+                  },
+                  "id": 1309,
+                  "nodeType": "ExpressionStatement",
+                  "src": "171:12:3"
+                }
+              ]
+            },
+            "id": 1311,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": false,
+            "modifiers": [],
+            "name": "setData",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1304,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1303,
+                  "name": "_data",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1311,
+                  "src": "142:14:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_MyStruct_$1299_memory_ptr",
+                    "typeString": "struct Experiment.MyStruct memory"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 1302,
+                    "name": "MyStruct",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1299,
+                    "src": "142:8:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MyStruct_$1299_storage_ptr",
+                      "typeString": "struct Experiment.MyStruct storage pointer"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "141:16:3"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 1305,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "165:0:3"
+            },
+            "scope": 1312,
+            "src": "125:63:3",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 1313,
+        "src": "35:155:3"
+      }
+    ],
+    "src": "0:190:3"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/ProofDEX/contracts/utils/Experiment.sol",
+    "exportedSymbols": {
+      "Experiment": [
+        1312
+      ]
+    },
+    "id": 1313,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1294,
+        "literals": [
+          "experimental",
+          "ABIEncoderV2"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:33:3"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 1312,
+        "linearizedBaseContracts": [
+          1312
+        ],
+        "name": "Experiment",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "Experiment.MyStruct",
+            "id": 1299,
+            "members": [
+              {
+                "constant": false,
+                "id": 1296,
+                "name": "a",
+                "nodeType": "VariableDeclaration",
+                "scope": 1299,
+                "src": "82:5:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_int256",
+                  "typeString": "int256"
+                },
+                "typeName": {
+                  "id": 1295,
+                  "name": "int",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "82:3:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 1298,
+                "name": "b",
+                "nodeType": "VariableDeclaration",
+                "scope": 1299,
+                "src": "93:5:3",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_int256",
+                  "typeString": "int256"
+                },
+                "typeName": {
+                  "id": 1297,
+                  "name": "int",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "93:3:3",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_int256",
+                    "typeString": "int256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              }
+            ],
+            "name": "MyStruct",
+            "nodeType": "StructDefinition",
+            "scope": 1312,
+            "src": "60:43:3",
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "id": 1301,
+            "name": "data",
+            "nodeType": "VariableDeclaration",
+            "scope": 1312,
+            "src": "107:13:3",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_struct$_MyStruct_$1299_storage",
+              "typeString": "struct Experiment.MyStruct storage ref"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 1300,
+              "name": "MyStruct",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1299,
+              "src": "107:8:3",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_MyStruct_$1299_storage_ptr",
+                "typeString": "struct Experiment.MyStruct storage pointer"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 1310,
+              "nodeType": "Block",
+              "src": "165:23:3",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 1308,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 1306,
+                      "name": "data",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1301,
+                      "src": "171:4:3",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MyStruct_$1299_storage",
+                        "typeString": "struct Experiment.MyStruct storage ref"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 1307,
+                      "name": "_data",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 1303,
+                      "src": "178:5:3",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_MyStruct_$1299_memory_ptr",
+                        "typeString": "struct Experiment.MyStruct memory"
+                      }
+                    },
+                    "src": "171:12:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MyStruct_$1299_storage",
+                      "typeString": "struct Experiment.MyStruct storage ref"
+                    }
+                  },
+                  "id": 1309,
+                  "nodeType": "ExpressionStatement",
+                  "src": "171:12:3"
+                }
+              ]
+            },
+            "id": 1311,
+            "implemented": true,
+            "isConstructor": false,
+            "isDeclaredConst": false,
+            "modifiers": [],
+            "name": "setData",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1304,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1303,
+                  "name": "_data",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1311,
+                  "src": "142:14:3",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_MyStruct_$1299_memory_ptr",
+                    "typeString": "struct Experiment.MyStruct memory"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 1302,
+                    "name": "MyStruct",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1299,
+                    "src": "142:8:3",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_MyStruct_$1299_storage_ptr",
+                      "typeString": "struct Experiment.MyStruct storage pointer"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "141:16:3"
+            },
+            "payable": false,
+            "returnParameters": {
+              "id": 1305,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "165:0:3"
+            },
+            "scope": 1312,
+            "src": "125:63:3",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 1313,
+        "src": "35:155:3"
+      }
+    ],
+    "src": "0:190:3"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.19+commit.c4cbbb05.Emscripten.clang"
+  },
+  "networks": {
+    "1000": {
+      "events": {},
+      "links": {},
+      "address": "0x792f31258dd31e2574c3c1952fd9d01ce968da19",
+      "transactionHash": "0x14594f320db802d86f22874a4fdfa8c3557ee39bba7c7459fe185f11eeca7e17"
+    }
+  },
+  "schemaVersion": "2.0.0",
+  "updatedAt": "2018-04-26T08:07:30.948Z"
+}
