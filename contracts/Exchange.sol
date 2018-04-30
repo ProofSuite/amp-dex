@@ -47,27 +47,13 @@ contract Exchange is Owned
     bytes32  orderHash
   );
 
-  event Log(
-    string key,
-    bytes32 value
-  );
-
-  event LogInt(
-    string key,
-    uint256 value
-  );
-
-  event LogAddress(
-    string key,
-    address value
-  );
 
   address public feeAccount;
   uint256 public withdrawalSecurityPeriod;
   mapping (bytes32 => bool) public traded;
   mapping (bytes32 => bool) public withdrawn;
   mapping (bytes32 => bool) public transferred;
-  mapping (address => bool) public admins;
+  mapping (address => bool) public operators;
   mapping (address => uint256) public lastTransaction;
   mapping (bytes32 => uint256) public orderFills;
   mapping (address => mapping (address => uint256)) public tokens;
@@ -98,25 +84,25 @@ contract Exchange is Owned
     feeAccount = _feeAccount;
   }
 
-  function setFeeAccount(address _feeAccount) public onlyAdmin returns (bool)
+  function setFeeAccount(address _feeAccount) public onlyOperator returns (bool)
   {
     feeAccount = _feeAccount;
     return true;
   }
 
-  function setAdmin(address admin, bool isAdmin) public onlyOwner returns (bool)
+  function setOperator(address operator, bool isOperator) public onlyOwner returns (bool)
   {
-    admins[admin] = isAdmin;
+    operators[operator] = isOperator;
     return true;
   }
 
-  modifier onlyAdmin
+  modifier onlyOperator
   {
-    require(msg.sender == owner || admins[msg.sender]);
+    require(msg.sender == owner || operators[msg.sender]);
     _;
   }
 
-  function setWithdrawalSecurityPeriod(uint256 _withdrawalSecurityPeriod) public onlyAdmin returns (bool)
+  function setWithdrawalSecurityPeriod(uint256 _withdrawalSecurityPeriod) public onlyOperator returns (bool)
   {
     withdrawalSecurityPeriod = _withdrawalSecurityPeriod;
     return true;
@@ -188,7 +174,7 @@ contract Exchange is Owned
     uint256 nonce,
     uint8 v,
     bytes32[2] rs,
-    uint256 feeWithdrawal) public onlyAdmin returns (bool)
+    uint256 feeWithdrawal) public onlyOperator returns (bool)
   {
 
     bytes32 orderHash = keccak256(this, token, amount, trader, receiver, nonce);
@@ -293,13 +279,13 @@ contract Exchange is Owned
   //   address taker,
   //   uint8[2]v,
   //   bytes32[4] rs
-  // ) public onlyAdmin returns (bool)
+  // ) public onlyOperator returns (bool)
   function executeTrade(
     uint256[8] orderValues,
     address[4] orderAddresses,
     uint8[2] memory v,
     bytes32[4] memory rs
-  ) public onlyAdmin returns (bool)
+  ) public onlyOperator returns (bool)
   {
     Order memory order = Order({
       amountBuy: orderValues[0],
