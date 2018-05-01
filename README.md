@@ -1,7 +1,6 @@
 
 # Proof DEX
-Official Repository for the Proof Crypto Fiat project
-
+Official Repository for the Proof Decentralized Exchange
 
 <!-- [![Build Status](https://travis-ci.org/ProofSuite/ProofCryptoFiat.svg?branch=develop)](https://travis-ci.org/ProofSuite/ProofCryptoFiat) -->
 <!-- [![Code Coverage](https://codecov.io/gh/ProofSuite/ProofCryptoFiat/branch/develop/graph/badge.svg)](https://codecov.io/gh/ProofSuite/ProofCryptoFiat) -->
@@ -28,8 +27,8 @@ having to perform a blockchain transaction and pay the associated gas fees.
 - Clone the repository and install dependencies
 
 ```
-git clone https://github.com/ProofSuite/ProofCryptoFiat.git
-cd ProofCryptoFiat
+git clone https://github.com/ProofSuite/proof-dex.git
+cd prood-dex
 npm install
 ```
 
