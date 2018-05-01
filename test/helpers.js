@@ -58,9 +58,9 @@ export const expectOutOfGas = async (promise) => {
  * @description Mine the local evm
  * @returns promise
  */
-export const advanceBlock = () => {
+export const advanceBlock = (web3) => {
   return new Promise((resolve, reject) => {
-    web3.currentProvider.sendAsync({
+    web3.currentProvider.send({
       jsonrpc: '2.0',
       method: 'evm_mine',
       id: Date.now(),
@@ -70,25 +70,15 @@ export const advanceBlock = () => {
   })
 }
 
-/**
- * @description Advance to input block
- * @param {Number} number
- */
-export const advanceToBlock = async(number) => {
-  if (web3.eth.blockNumber > number) {
-    throw Error(`block number ${number} is in the past (current is ${web3.eth.blockNumber})`)
-  }
-  while (web3.eth.blockNumber < number) {
-    await advanceBlock()
-  }
-}
-
-export const advanceNBlocks = async(number) => {
-  let initialBlockNumber = web3.eth.blockNumber
+export const advanceNBlocks = async(web3, number) => {
+  let initialBlockNumber = await web3.eth.getBlockNumber()
+  let blockNumber = initialBlockNumber
   if (number < 0) {
     throw Error(`number should be a strictly positive number`)
   }
-  while(web3.eth.blockNumber < initialBlockNumber + number) {
-    await advanceBlock()
+
+  while(blockNumber < initialBlockNumber + number) {
+    await advanceBlock(web3)
+    blockNumber = await web3.eth.getBlockNumber()
   }
 }
