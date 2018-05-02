@@ -73,6 +73,17 @@ contract Exchange is Owned
     address maker;
   }
 
+  struct TrimmedOrder
+  {
+    uint256 amountBuy;
+    uint256 amountSell;
+    uint256 expires;
+    uint256 nonce;
+    address tokenBuy;
+    address tokenSell;
+    address maker;
+  }
+
   struct Trade
   {
     uint256 amount;
@@ -371,29 +382,51 @@ contract Exchange is Owned
     return true;
   }
 
-  // function cancelOrder(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, uint8 v, bytes32 r, bytes32 s, address maker) {
-  //   bytes orderHash = keccak256(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, maker)
-  //   require(ecrecover(keccak256("x19Ethereum Signed Message:\32", orderHash), v, r, s) == msg.sender);
-  //   orderFills[orderHash] = amountBuy;
-  //   LogCancelOrder(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, msg.sender, v, r, s);
-  //   }
-  // }
+  function cancelOrder(
+    uint256[5] orderValues,
+    address[4] orderAddresses,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+    ) public returns (bool)
+  {
+    TrimmedOrder memory order = TrimmedOrder({
+      amountBuy: orderValues[0],
+      amountSell: orderValues[1],
+      expires: orderValues[2],
+      nonce: orderValues[3],
+      tokenBuy: orderAddresses[0],
+      tokenSell: orderAddresses[1],
+      maker: orderAddresses[2]
+    });
 
-    function isValidSignature(
-      address signer,
-      bytes32 hashedData,
-      uint8 v,
-      bytes32 r,
-      bytes32 s
-    ) public constant returns (bool)
+    bytes32 orderHash = keccak256(this, order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, order.maker);
+
+    if (!isValidSignature(msg.sender, orderHash, v, r, s))
     {
-      return signer == ecrecover(
-          keccak256("\x19Ethereum Signed Message:\n32", hashedData),
-          v,
-          r,
-          s
-      );
+      LogError(uint8(Errors.SIGNATURE_INVALID), orderHash);
+      return false;
     }
+
+    orderFills[orderHash] = order.amountBuy;
+    LogCancelOrder(order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, msg.sender, v, r, s);
+  }
+
+  function isValidSignature(
+    address signer,
+    bytes32 hashedData,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) public constant returns (bool)
+  {
+    return signer == ecrecover(
+        keccak256("\x19Ethereum Signed Message:\n32", hashedData),
+        v,
+        r,
+        s
+    );
+  }
 
 
   function() external
