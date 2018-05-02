@@ -35,7 +35,7 @@ contract('Exchange', (accounts) => {
     exchange = await Exchange.new(feeAccount)
   })
 
-  describe('Admin functions', async () => {
+  describe('Operator functions', async () => {
     it('should set the fee account', async () => {
       let expectedNewFeeAccount = accounts[3]
       await exchange.setFeeAccount(expectedNewFeeAccount)
@@ -316,7 +316,7 @@ contract('Exchange', (accounts) => {
     })
   })
 
-  describe('Canceling orders', async () => {
+  describe('Canceling orders and trades', async () => {
     beforeEach(async() => {
       exchange = await Exchange.new(feeAccount)
       token1 = await Token.new(trader1, 1000)
@@ -433,6 +433,245 @@ contract('Exchange', (accounts) => {
 
       let orderFill = await exchange.orderFills.call(orderHash)
       orderFill.should.be.bignumber.equal(0)
+    })
+
+    it('should cancel a trade', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+
+      let order = {
+        amountBuy: 1000,
+        amountSell: 1000,
+        expires: initialBlockNumber+10,
+        nonce: 0,
+        feeMake: 10,
+        feeTake: 10,
+        tokenBuy: token2.address,
+        tokenSell: token1.address,
+        maker: trader1
+      }
+
+      let trade = {
+        amount: 500,
+        tradeNonce: 0,
+        taker: trader2
+      }
+
+      let orderHash = keccak256(
+        exchange.address,
+        order.tokenBuy,
+        order.amountBuy,
+        order.tokenSell,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.maker
+      )
+
+      let tradeHash = keccak256(
+        orderHash,
+        trade.amount,
+        trade.taker,
+        trade.tradeNonce
+      )
+
+      let { message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1 } = web3.eth.accounts.sign(orderHash, privateKey1)
+      let { message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2 } = web3.eth.accounts.sign(tradeHash, privateKey2)
+
+      let orderValues = [
+        order.amountBuy,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.feeMake,
+        order.feeTake,
+        trade.amount,
+        trade.tradeNonce
+      ]
+
+      let orderAddresses = [
+        order.tokenBuy,
+        order.tokenSell,
+        order.maker,
+        trade.taker
+      ]
+
+      await exchange.cancelTrade(
+        orderHash,
+        trade.amount,
+        trade.tradeNonce,
+        trade.taker,
+        v2,
+        r2,
+        s2,
+        { from: trader2 }
+      )
+
+      let tradeCanceled = await exchange.traded.call(tradeHash)
+      tradeCanceled.should.be.equal(true)
+    })
+
+    it('canceling a trade should fail if the provided signature is invalid', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+
+      let order = {
+        amountBuy: 1000,
+        amountSell: 1000,
+        expires: initialBlockNumber+10,
+        nonce: 0,
+        feeMake: 10,
+        feeTake: 10,
+        tokenBuy: token2.address,
+        tokenSell: token1.address,
+        maker: trader1
+      }
+
+      let trade = {
+        amount: 500,
+        tradeNonce: 0,
+        taker: trader2
+      }
+
+      let orderHash = keccak256(
+        exchange.address,
+        order.tokenBuy,
+        order.amountBuy,
+        order.tokenSell,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.maker
+      )
+
+      let tradeHash = keccak256(
+        orderHash,
+        trade.amount,
+        trade.taker,
+        trade.tradeNonce
+      )
+
+      let { message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1 } = web3.eth.accounts.sign(orderHash, privateKey1)
+      let { message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2 } = web3.eth.accounts.sign(tradeHash, privateKey2)
+
+      let orderValues = [
+        order.amountBuy,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.feeMake,
+        order.feeTake,
+        trade.amount,
+        trade.tradeNonce
+      ]
+
+      let orderAddresses = [
+        order.tokenBuy,
+        order.tokenSell,
+        order.maker,
+        trade.taker
+      ]
+
+      await exchange.cancelTrade(
+        orderHash,
+        trade.amount,
+        trade.tradeNonce,
+        trade.taker,
+        v2,
+        r2,
+        s2,
+        { from: asshole }
+      )
+
+      let tradeCanceled = await exchange.traded.call(tradeHash)
+      tradeCanceled.should.be.equal(false)
+    })
+
+    it('executing a trade should fail if the trade has been canceled', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+
+      let order = {
+        amountBuy: 1000,
+        amountSell: 1000,
+        expires: initialBlockNumber+10,
+        nonce: 0,
+        feeMake: 10,
+        feeTake: 10,
+        tokenBuy: token2.address,
+        tokenSell: token1.address,
+        maker: trader1
+      }
+
+      let trade = {
+        amount: 500,
+        tradeNonce: 0,
+        taker: trader2
+      }
+
+      let orderHash = keccak256(
+        exchange.address,
+        order.tokenBuy,
+        order.amountBuy,
+        order.tokenSell,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.maker
+      )
+
+      let tradeHash = keccak256(
+        orderHash,
+        trade.amount,
+        trade.taker,
+        trade.tradeNonce
+      )
+
+      let { message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1 } = web3.eth.accounts.sign(orderHash, privateKey1)
+      let { message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2 } = web3.eth.accounts.sign(tradeHash, privateKey2)
+
+      let orderValues = [
+        order.amountBuy,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.feeMake,
+        order.feeTake,
+        trade.amount,
+        trade.tradeNonce
+      ]
+
+      let orderAddresses = [
+        order.tokenBuy,
+        order.tokenSell,
+        order.maker,
+        trade.taker
+      ]
+
+      await exchange.cancelTrade(
+        orderHash,
+        trade.amount,
+        trade.tradeNonce,
+        trade.taker,
+        v2,
+        r2,
+        s2,
+        { from: trader2 }
+      )
+
+      await exchange.executeTrade(
+        orderValues,
+        orderAddresses,
+        [v1, v2],
+        [r1, s1, r2, s2]
+      )
+
+      let trader1BalanceOfToken1 = await exchange.tokenBalance(trader1, token1.address)
+      let trader1BalanceOfToken2 = await exchange.tokenBalance(trader1, token2.address)
+      let trader2BalanceOfToken1 = await exchange.tokenBalance(trader2, token1.address)
+      let trader2BalanceOfToken2 = await exchange.tokenBalance(trader2, token2.address)
+
+      trader1BalanceOfToken1.should.be.bignumber.equal(1000)
+      trader1BalanceOfToken2.should.be.bignumber.equal(0)
+      trader2BalanceOfToken1.should.be.bignumber.equal(0)
+      trader2BalanceOfToken2.should.be.bignumber.equal(500)
     })
   })
 
