@@ -28,12 +28,24 @@ contract Exchange is Owned
     bytes32 s
   );
 
+  event LogCancelTrade(
+    bytes32 orderHash,
+    uint256 amount,
+    uint256 tradeNonce,
+    address taker,
+    address sender,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  );
+
   enum Errors
   {
     MAKER_INSUFFICIENT_BALANCE,
     TAKER_INSUFFICIENT_BALANCE,
     WITHDRAW_INSUFFICIENT_BALANCE,
     WITHDRAW_FEE_TO_HIGH,
+    ORDER_EXPIRED,
     WITHDRAW_ALREADY_COMPLETED,
     TRADE_ALREADY_COMPLETED,
     TRADE_AMOUNT_TOO_BIG,
@@ -67,6 +79,17 @@ contract Exchange is Owned
     uint256 nonce;
     uint256 feeMake;
     uint256 feeTake;
+    address tokenBuy;
+    address tokenSell;
+    address maker;
+  }
+
+  struct TrimmedOrder
+  {
+    uint256 amountBuy;
+    uint256 amountSell;
+    uint256 expires;
+    uint256 nonce;
     address tokenBuy;
     address tokenSell;
     address maker;
@@ -320,6 +343,11 @@ contract Exchange is Owned
       return false;
     }
 
+    if (order.expires < block.number) {
+      LogError(uint8(Errors.ORDER_EXPIRED), orderHash);
+      return false;
+    }
+
     if (tokens[order.tokenBuy][trade.taker] < trade.amount)
     {
       LogError(uint8(Errors.TAKER_INSUFFICIENT_BALANCE), tradeHash);
@@ -365,29 +393,73 @@ contract Exchange is Owned
     return true;
   }
 
-  // function cancelOrder(address tokenBuy, uint256 amountBuy, address tokenSell, uint256 amountSell, uint256 expires, uint256 nonce, uint8 v, bytes32 r, bytes32 s, address maker) {
-  //   bytes orderHash = keccak256(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, maker)
-  //   require(ecrecover(keccak256("x19Ethereum Signed Message:\32", orderHash), v, r, s) == msg.sender);
-  //   orderFills[orderHash] = amountBuy;
-  //   LogCancelOrder(tokenBuy, amountBuy, tokenSell, amountSell, expires, nonce, msg.sender, v, r, s);
-  //   }
-  // }
+  function cancelOrder(
+    uint256[5] orderValues,
+    address[4] orderAddresses,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+    ) public returns (bool)
+  {
+    TrimmedOrder memory order = TrimmedOrder({
+      amountBuy: orderValues[0],
+      amountSell: orderValues[1],
+      expires: orderValues[2],
+      nonce: orderValues[3],
+      tokenBuy: orderAddresses[0],
+      tokenSell: orderAddresses[1],
+      maker: orderAddresses[2]
+    });
 
-    function isValidSignature(
-      address signer,
-      bytes32 hashedData,
-      uint8 v,
-      bytes32 r,
-      bytes32 s
-    ) public constant returns (bool)
+    bytes32 orderHash = keccak256(this, order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, order.maker);
+
+    if (!isValidSignature(msg.sender, orderHash, v, r, s))
     {
-      return signer == ecrecover(
-          keccak256("\x19Ethereum Signed Message:\n32", hashedData),
-          v,
-          r,
-          s
-      );
+      LogError(uint8(Errors.SIGNATURE_INVALID), orderHash);
+      return false;
     }
+
+    orderFills[orderHash] = order.amountBuy;
+    LogCancelOrder(order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, msg.sender, v, r, s);
+  }
+
+  function cancelTrade(
+    bytes32 orderHash,
+    uint256 amount,
+    uint256 tradeNonce,
+    address taker,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) public returns (bool)
+  {
+    bytes32 tradeHash = keccak256(orderHash, amount, taker, tradeNonce);
+
+    if (!isValidSignature(msg.sender, tradeHash, v, r, s))
+    {
+      LogError(uint8(Errors.SIGNATURE_INVALID), tradeHash);
+      return false;
+    }
+
+    traded[tradeHash] = true;
+    LogCancelTrade(orderHash, amount, tradeNonce, taker, msg.sender, v, r, s);
+  }
+
+  function isValidSignature(
+    address signer,
+    bytes32 hashedData,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) public constant returns (bool)
+  {
+    return signer == ecrecover(
+        keccak256("\x19Ethereum Signed Message:\n32", hashedData),
+        v,
+        r,
+        s
+    );
+  }
 
 
   function() external
