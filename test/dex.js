@@ -158,12 +158,92 @@ contract('Exchange', (accounts) => {
       await exchange.depositToken(token2.address, 500, { from: trader2 })
     })
 
-    it('should execute a trade', async () => {
+    it('should execute a trade (if order is not expired)', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+      console.log(typeof initialBlockNumber)
 
-        let order = {
+      let order = {
+        amountBuy: 1000,
+        amountSell: 1000,
+        expires: initialBlockNumber+10,
+        nonce: 0,
+        feeMake: 10,
+        feeTake: 10,
+        tokenBuy: token2.address,
+        tokenSell: token1.address,
+        maker: trader1
+      }
+
+      let trade = {
+        amount: 500,
+        tradeNonce: 0,
+        taker: trader2
+      }
+
+      let orderHash = keccak256(
+        exchange.address,
+        order.tokenBuy,
+        order.amountBuy,
+        order.tokenSell,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.maker
+      )
+
+      let tradeHash = keccak256(
+        orderHash,
+        trade.amount,
+        trade.taker,
+        trade.tradeNonce
+      )
+
+      let { message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1 } = web3.eth.accounts.sign(orderHash, privateKey1)
+      let { message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2 } = web3.eth.accounts.sign(tradeHash, privateKey2)
+
+      let orderValues = [
+        order.amountBuy,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.feeMake,
+        order.feeTake,
+        trade.amount,
+        trade.tradeNonce
+      ]
+
+      let orderAddresses = [
+        order.tokenBuy,
+        order.tokenSell,
+        order.maker,
+        trade.taker
+      ]
+
+      await exchange.executeTrade(
+        orderValues,
+        orderAddresses,
+        [v1, v2],
+        [r1, s1, r2, s2]
+      )
+
+      let trader1BalanceOfToken1 = await exchange.tokenBalance(trader1, token1.address)
+      let trader1BalanceOfToken2 = await exchange.tokenBalance(trader1, token2.address)
+      let trader2BalanceOfToken1 = await exchange.tokenBalance(trader2, token1.address)
+      let trader2BalanceOfToken2 = await exchange.tokenBalance(trader2, token2.address)
+
+      trader1BalanceOfToken1.should.be.bignumber.equal(500)
+      trader1BalanceOfToken2.should.be.bignumber.equal(500)
+      trader2BalanceOfToken1.should.be.bignumber.equal(500)
+      trader2BalanceOfToken2.should.be.bignumber.equal(0)
+    })
+
+    it('should not execute a trade if the order is expired', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+
+      let order = {
           amountBuy: 1000,
           amountSell: 1000,
-          expires: 0,
+          expires: initialBlockNumber-1,
           nonce: 0,
           feeMake: 10,
           feeTake: 10,
@@ -229,10 +309,10 @@ contract('Exchange', (accounts) => {
         let trader2BalanceOfToken1 = await exchange.tokenBalance(trader2, token1.address)
         let trader2BalanceOfToken2 = await exchange.tokenBalance(trader2, token2.address)
 
-        trader1BalanceOfToken1.should.be.bignumber.equal(500)
-        trader1BalanceOfToken2.should.be.bignumber.equal(500)
-        trader2BalanceOfToken1.should.be.bignumber.equal(500)
-        trader2BalanceOfToken2.should.be.bignumber.equal(0)
+        trader1BalanceOfToken1.should.be.bignumber.equal(1000)
+        trader1BalanceOfToken2.should.be.bignumber.equal(0)
+        trader2BalanceOfToken1.should.be.bignumber.equal(0)
+        trader2BalanceOfToken2.should.be.bignumber.equal(500)
     })
   })
 
