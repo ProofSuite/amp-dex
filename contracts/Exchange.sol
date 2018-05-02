@@ -28,6 +28,17 @@ contract Exchange is Owned
     bytes32 s
   );
 
+  event LogCancelTrade(
+    bytes32 orderHash,
+    uint256 amount,
+    uint256 tradeNonce,
+    address taker,
+    address sender,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  );
+
   enum Errors
   {
     MAKER_INSUFFICIENT_BALANCE,
@@ -410,6 +421,28 @@ contract Exchange is Owned
 
     orderFills[orderHash] = order.amountBuy;
     LogCancelOrder(order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, msg.sender, v, r, s);
+  }
+
+  function cancelTrade(
+    bytes32 orderHash,
+    uint256 amount,
+    uint256 tradeNonce,
+    address taker,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) public returns (bool)
+  {
+    bytes32 tradeHash = keccak256(orderHash, amount, taker, tradeNonce);
+
+    if (!isValidSignature(msg.sender, tradeHash, v, r, s))
+    {
+      LogError(uint8(Errors.SIGNATURE_INVALID), tradeHash);
+      return false;
+    }
+
+    traded[tradeHash] = true;
+    LogCancelTrade(orderHash, amount, tradeNonce, taker, msg.sender, v, r, s);
   }
 
   function isValidSignature(
