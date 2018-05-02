@@ -34,6 +34,7 @@ contract Exchange is Owned
     TAKER_INSUFFICIENT_BALANCE,
     WITHDRAW_INSUFFICIENT_BALANCE,
     WITHDRAW_FEE_TO_HIGH,
+    ORDER_EXPIRED,
     WITHDRAW_ALREADY_COMPLETED,
     TRADE_ALREADY_COMPLETED,
     TRADE_AMOUNT_TOO_BIG,
@@ -317,6 +318,11 @@ contract Exchange is Owned
     if (!isValidSignature(trade.taker, tradeHash, v[1] ,rs[2], rs[3]))
     {
       LogError(uint8(Errors.TAKER_SIGNATURE_INVALID), tradeHash);
+      return false;
+    }
+
+    if (order.expires < block.number) {
+      LogError(uint8(Errors.ORDER_EXPIRED), orderHash);
       return false;
     }
 
