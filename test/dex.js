@@ -23,6 +23,7 @@ contract('Exchange', (accounts) => {
   let feeAccount = accounts[1]
   let trader1 = accounts[2]
   let trader2 = accounts[3]
+  let asshole = accounts[4]
   let privateKey1 = '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501202'
   let privateKey2 = '0x2bdd21761a483f71054e14f5b827213567971c676928d9a1808cbfa4b7501203'
   let exchange
@@ -160,7 +161,6 @@ contract('Exchange', (accounts) => {
 
     it('should execute a trade (if order is not expired)', async () => {
       let initialBlockNumber = await web3.eth.getBlockNumber()
-      console.log(typeof initialBlockNumber)
 
       let order = {
         amountBuy: 1000,
@@ -313,6 +313,126 @@ contract('Exchange', (accounts) => {
         trader1BalanceOfToken2.should.be.bignumber.equal(0)
         trader2BalanceOfToken1.should.be.bignumber.equal(0)
         trader2BalanceOfToken2.should.be.bignumber.equal(500)
+    })
+  })
+
+  describe('Canceling orders', async () => {
+    beforeEach(async() => {
+      exchange = await Exchange.new(feeAccount)
+      token1 = await Token.new(trader1, 1000)
+      token2 = await Token.new(trader2, 500)
+
+      await token1.approve(exchange.address, 1000, { from: trader1 })
+      await exchange.depositToken(token1.address, 1000, { from: trader1 })
+
+      await token2.approve(exchange.address, 500, { from: trader2 })
+      await exchange.depositToken(token2.address, 500, { from: trader2 })
+    })
+
+    it('should cancel an order', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+
+      let order = {
+        amountBuy: 1000,
+        amountSell: 1000,
+        expires: initialBlockNumber+10,
+        nonce: 0,
+        feeMake: 10,
+        feeTake: 10,
+        tokenBuy: token2.address,
+        tokenSell: token1.address,
+        maker: trader1
+      }
+
+      let orderHash = keccak256(
+        exchange.address,
+        order.tokenBuy,
+        order.amountBuy,
+        order.tokenSell,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.maker
+      )
+
+      let orderValues = [
+        order.amountBuy,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+      ]
+
+      let orderAddresses = [
+        order.tokenBuy,
+        order.tokenSell,
+        order.maker,
+      ]
+
+      let { message: message1, messageHash: messageHash1, r, s, v } = web3.eth.accounts.sign(orderHash, privateKey1)
+
+      await exchange.cancelOrder(
+        orderValues,
+        orderAddresses,
+        v,
+        r,
+        s,
+        { from: trader1 })
+
+      let orderFill = await exchange.orderFills.call(orderHash)
+      orderFill.should.be.bignumber.equal(order.amountBuy)
+    })
+
+    it('should fail if the provided signature is invalid', async () => {
+      let initialBlockNumber = await web3.eth.getBlockNumber()
+
+      let order = {
+        amountBuy: 1000,
+        amountSell: 1000,
+        expires: initialBlockNumber+10,
+        nonce: 0,
+        feeMake: 10,
+        feeTake: 10,
+        tokenBuy: token2.address,
+        tokenSell: token1.address,
+        maker: trader1
+      }
+
+      let orderHash = keccak256(
+        exchange.address,
+        order.tokenBuy,
+        order.amountBuy,
+        order.tokenSell,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+        order.maker
+      )
+
+      let orderValues = [
+        order.amountBuy,
+        order.amountSell,
+        order.expires,
+        order.nonce,
+      ]
+
+      let orderAddresses = [
+        order.tokenBuy,
+        order.tokenSell,
+        order.maker,
+      ]
+
+      let { message: message1, messageHash: messageHash1, r, s, v } = web3.eth.accounts.sign(orderHash, privateKey1)
+
+      await exchange.cancelOrder(
+        orderValues,
+        orderAddresses,
+        v,
+        r,
+        s,
+        { from: asshole })
+
+      let orderFill = await exchange.orderFills.call(orderHash)
+      orderFill.should.be.bignumber.equal(0)
     })
   })
 
