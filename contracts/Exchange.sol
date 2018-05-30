@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.17;
 // pragma experimental ABIEncoderV2;
 
 import './utils/SafeMath.sol';
@@ -9,34 +9,36 @@ contract Exchange is Owned
 {
   using SafeMath for uint256;
 
-  event LogTrade(address tokenBuy, address tokenSell, address maker, address taker, uint256 amount, bytes32 hsh);
+  event LogTrade(address tokenBuy, address tokenSell, address maker, address taker, uint256 amount, bytes32 orderHash, bytes32 tradeHash);
   event LogDeposit(address token, address user, uint256 amount, uint256 balance);
   event LogWithdraw(address token, address user, uint256 amount, uint256 balance);
   event LogSecurityWithdraw(address token, address user, uint256 amount, uint256 balance);
   event LogTransfer(address token, address recipient);
 
   event LogCancelOrder(
-    address tokenBuy,
-    uint256 amountBuy,
-    address tokenSell,
-    uint256 amountSell,
-    uint256 expires,
-    uint256 nonce,
-    address maker,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    address sender,
+    bytes32 orderHash
   );
 
   event LogCancelTrade(
-    bytes32 orderHash,
-    uint256 amount,
-    uint256 tradeNonce,
-    address taker,
     address sender,
-    uint8 v,
-    bytes32 r,
-    bytes32 s
+    bytes32 tradeHash
+  );
+
+  event LogError(
+    uint8  errorId,
+    bytes32 orderHash,
+    bytes32  tradeHash
+  );
+
+  event LogWithdrawalError(
+    uint8 errorId,
+    bytes32 withdrawalHash
+  );
+
+  event LogCancelOrderError(
+    uint8 errorId,
+    bytes32 orderHash
   );
 
   enum Errors
@@ -53,11 +55,6 @@ contract Exchange is Owned
     MAKER_SIGNATURE_INVALID,
     TAKER_SIGNATURE_INVALID
   }
-
-  event LogError(
-    uint8  errorId,
-    bytes32  orderHash
-  );
 
 
   address public feeAccount;
@@ -232,7 +229,7 @@ contract Exchange is Owned
 
 
   function validateWithdrawal(
-    bytes32 orderHash,
+    bytes32 withdrawalHash,
     address token,
     uint256 amount,
     address trader,
@@ -243,27 +240,27 @@ contract Exchange is Owned
   ) internal returns (bool)
   {
 
-    if (!isValidSignature(trader, orderHash, v, rs[0], rs[1]))
+    if (!isValidSignature(trader, withdrawalHash, v, rs[0], rs[1]))
     {
-      LogError(uint8(Errors.SIGNATURE_INVALID), orderHash);
+      LogWithdrawalError(uint8(Errors.SIGNATURE_INVALID), withdrawalHash);
       return false;
     }
 
-    if (withdrawn[orderHash])
+    if (withdrawn[withdrawalHash])
     {
-      LogError(uint8(Errors.WITHDRAW_ALREADY_COMPLETED), orderHash);
+      LogWithdrawalError(uint8(Errors.WITHDRAW_ALREADY_COMPLETED), withdrawalHash);
       return false;
     }
 
     if (tokens[token][trader] < amount)
     {
-      LogError(uint8(Errors.WITHDRAW_INSUFFICIENT_BALANCE), bytes32(tokens[token][trader]));
+      LogWithdrawalError(uint8(Errors.WITHDRAW_INSUFFICIENT_BALANCE), withdrawalHash);
       return false;
     }
 
     if (feeWithdrawal > amount)
     {
-      LogError(uint8(Errors.WITHDRAW_FEE_TO_HIGH), bytes32(feeWithdrawal));
+      LogWithdrawalError(uint8(Errors.WITHDRAW_FEE_TO_HIGH), bytes32(feeWithdrawal));
       return false;
     }
 
@@ -333,42 +330,42 @@ contract Exchange is Owned
 
     if (!isValidSignature(order.maker, orderHash, v[0] , rs[0], rs[1]))
     {
-      LogError(uint8(Errors.MAKER_SIGNATURE_INVALID), orderHash);
+      LogError(uint8(Errors.MAKER_SIGNATURE_INVALID), orderHash, tradeHash);
       return false;
     }
 
     if (!isValidSignature(trade.taker, tradeHash, v[1] ,rs[2], rs[3]))
     {
-      LogError(uint8(Errors.TAKER_SIGNATURE_INVALID), tradeHash);
+      LogError(uint8(Errors.TAKER_SIGNATURE_INVALID), orderHash, tradeHash);
       return false;
     }
 
     if (order.expires < block.number) {
-      LogError(uint8(Errors.ORDER_EXPIRED), orderHash);
+      LogError(uint8(Errors.ORDER_EXPIRED), orderHash, tradeHash);
       return false;
     }
 
     if (tokens[order.tokenBuy][trade.taker] < trade.amount)
     {
-      LogError(uint8(Errors.TAKER_INSUFFICIENT_BALANCE), tradeHash);
+      LogError(uint8(Errors.TAKER_INSUFFICIENT_BALANCE), orderHash, tradeHash);
       return false;
     }
 
     if (tokens[order.tokenSell][order.maker] < order.amountSell.mul(trade.amount).div(order.amountBuy))
     {
-      LogError(uint8(Errors.MAKER_INSUFFICIENT_BALANCE), tradeHash);
+      LogError(uint8(Errors.MAKER_INSUFFICIENT_BALANCE), orderHash, tradeHash);
       return false;
     }
 
     if (traded[tradeHash])
     {
-      LogError(uint8(Errors.TRADE_ALREADY_COMPLETED), tradeHash);
+      LogError(uint8(Errors.TRADE_ALREADY_COMPLETED), orderHash, tradeHash);
       return false;
     }
 
     if (orderFills[orderHash].add(trade.amount) > order.amountBuy)
     {
-      LogError(uint8(Errors.TRADE_AMOUNT_TOO_BIG), tradeHash);
+      LogError(uint8(Errors.TRADE_AMOUNT_TOO_BIG), orderHash, tradeHash);
       return false;
     }
 
@@ -389,7 +386,7 @@ contract Exchange is Owned
 
     lastTransaction[order.maker] = block.number;
     lastTransaction[trade.taker] = block.number;
-    LogTrade(order.tokenBuy, order.tokenSell, order.maker, trade.taker, trade.amount, orderHash);
+    LogTrade(order.tokenBuy, order.tokenSell, order.maker, trade.taker, trade.amount, orderHash, tradeHash);
     return true;
   }
 
@@ -415,13 +412,14 @@ contract Exchange is Owned
 
     if (!isValidSignature(msg.sender, orderHash, v, r, s))
     {
-      LogError(uint8(Errors.SIGNATURE_INVALID), orderHash);
+      LogCancelOrderError(uint8(Errors.SIGNATURE_INVALID), orderHash);
       return false;
     }
 
     orderFills[orderHash] = order.amountBuy;
-    LogCancelOrder(order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, msg.sender, v, r, s);
+    LogCancelOrder(msg.sender, orderHash);
   }
+
 
   function cancelTrade(
     bytes32 orderHash,
@@ -437,12 +435,12 @@ contract Exchange is Owned
 
     if (!isValidSignature(msg.sender, tradeHash, v, r, s))
     {
-      LogError(uint8(Errors.SIGNATURE_INVALID), tradeHash);
+      LogError(uint8(Errors.SIGNATURE_INVALID), orderHash, tradeHash);
       return false;
     }
 
     traded[tradeHash] = true;
-    LogCancelTrade(orderHash, amount, tradeNonce, taker, msg.sender, v, r, s);
+    LogCancelTrade(msg.sender, tradeHash);
   }
 
   function isValidSignature(
