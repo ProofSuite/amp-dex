@@ -8,14 +8,14 @@ contract Exchange is Owned {
     using SafeMath for uint256;
 
     enum Errors {
-        SIGNATURE_INVALID, // Signature is invalid
-        MAKER_SIGNATURE_INVALID, // Maker signature is invalid
-        TAKER_SIGNATURE_INVALID, // Taker signature is invalid
-        ORDER_EXPIRED, // Order has already expired
-        TRADE_ALREADY_COMPLETED_OR_CANCELLED, // Trade has already been completed or it has been cancelled by taker
-        TRADE_AMOUNT_TOO_BIG, // Trade buyToken amount bigger than the remianing amountBuy
-        ROUNDING_ERROR_TOO_LARGE, // Rounding error too large
-        INSUFFICIENT_BALANCE_OR_ALLOWANCE           // Maker/Taker has insufficient balance or allowance for token transfer
+        SIGNATURE_INVALID,                      // Signature is invalid
+        MAKER_SIGNATURE_INVALID,                // Maker signature is invalid
+        TAKER_SIGNATURE_INVALID,                // Taker signature is invalid
+        ORDER_EXPIRED,                          // Order has already expired
+        TRADE_ALREADY_COMPLETED_OR_CANCELLED,   // Trade has already been completed or it has been cancelled by taker
+        TRADE_AMOUNT_TOO_BIG,                   // Trade buyToken amount bigger than the remianing amountBuy
+        ROUNDING_ERROR_TOO_LARGE,               // Rounding error too large
+        INSUFFICIENT_BALANCE_OR_ALLOWANCE       // Maker/Taker has insufficient balance or allowance for token transfer
     }
 
     string constant public VERSION = "1.0.0";
@@ -24,8 +24,8 @@ contract Exchange is Owned {
 
     address public feeAccount;
     mapping(address => bool) public operators;
-    mapping(bytes32 => uint) public filled;        // Mappings of orderHash => amount of amountBuy filled.
-    mapping(bytes32 => bool) public traded;        // Mappings of tradeHash => bool value representing whether the trade is completed(true) or incomplete(false).
+    mapping(bytes32 => uint) public filled;       // Mappings of orderHash => amount of amountBuy filled.
+    mapping(bytes32 => bool) public traded;       // Mappings of tradeHash => bool value representing whether the trade is completed(true) or incomplete(false).
 
     event LogTrade(
         address indexed maker,
@@ -99,6 +99,11 @@ contract Exchange is Owned {
         feeAccount = _feeAccount;
     }
 
+    function setWethToken(address _wethToken) public onlyOwner returns (bool) {
+        WETH_TOKEN_CONTRACT = _wethToken;
+        return true;
+    }
+
     function setFeeAccount(address _feeAccount) public onlyOperator returns (bool) {
         feeAccount = _feeAccount;
         return true;
@@ -126,7 +131,7 @@ contract Exchange is Owned {
     ///         rs[1] is s parameter of the maker's signature
     ///         rs[2] is r parameter of the taker's signature
     ///         rs[3] is s parameter of the taker's signature
-    /// @return Total amount of takerToken filled in trade.
+    /// @return Success or failure of trade execution.
     function executeTrade(
         uint256[8] orderValues,
         address[4] orderAddresses,
@@ -273,6 +278,7 @@ contract Exchange is Owned {
             order.nonce,
             order.maker,
             keccak256(abi.encodePacked(order.tokenSell, order.tokenBuy)));
+        return true;
     }
 
 
@@ -305,6 +311,7 @@ contract Exchange is Owned {
         traded[tradeHash] = true;
 
         emit LogCancelTrade(orderHash, amount, tradeNonce, taker);
+        return true;
     }
 
     /*
