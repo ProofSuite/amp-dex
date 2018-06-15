@@ -99,16 +99,26 @@ contract Exchange is Owned {
         feeAccount = _feeAccount;
     }
 
+    /// @dev Sets the address of WETH token.
+    /// @param _wethToken An address to set as WETH token address.
+    /// @return Success on setting WETH token address.
     function setWethToken(address _wethToken) public onlyOwner returns (bool) {
         WETH_TOKEN_CONTRACT = _wethToken;
         return true;
     }
 
+    /// @dev Sets the address of fees account.
+    /// @param _feeAccount An address to set as fees account.
+    /// @return Success on setting fees account.
     function setFeeAccount(address _feeAccount) public onlyOperator returns (bool) {
         feeAccount = _feeAccount;
         return true;
     }
 
+    /// @dev Sets or unset's an operator.
+    /// @param operator The address of operator to set.
+    /// @param isOperator Bool value indicating whether the address is operator or not.
+    /// @return Success on setting an operator.
     function setOperator(address operator, bool isOperator) public onlyOwner returns (bool) {
         operators[operator] = isOperator;
         return true;
