@@ -11,8 +11,6 @@ chai
 
 const WETH = artifacts.require('./utils/WETH9.sol');
 const Exchange = artifacts.require('./Exchange.sol');
-const Token1 = artifacts.require('./contracts/tokens/Token1.sol');
-const Token2 = artifacts.require('./contracts/tokens/Token2.sol');
 
 contract('Exchange', (accounts) => {
     let web3 = new Web3('http://localhost:8545');
@@ -66,6 +64,34 @@ contract('Exchange', (accounts) => {
             let newWethTokenAddress = accounts[6];
             await expectRevert(exchange.setWethToken(newWethTokenAddress, {from: operator}));
             await expectRevert(exchange.setWethToken(newWethTokenAddress, {from: anyUser}))
+        })
+    });
+
+    describe('Operator management', async () => {
+        beforeEach(async () => {
+            weth = await WETH.new();
+            exchange = await Exchange.new(weth.address, feeAccount)
+        });
+
+        it('should set operator if requested by owner', async () => {
+            let expectedOperator = accounts[2];
+            await exchange.setOperator(expectedOperator, true, {from: owner});
+
+            let isOperator = await exchange.operators.call(expectedOperator);
+            isOperator.should.be.equal(true);
+
+            await exchange.setOperator(expectedOperator, false, {from: owner});
+
+            isOperator = await exchange.operators.call(expectedOperator);
+            isOperator.should.be.equal(false)
+        });
+
+        it('should not set operator if not requested by owner', async () => {
+            await exchange.setOperator(operator, true, {from: owner});
+
+            let newOperator = accounts[7];
+            await expectRevert(exchange.setOperator(newOperator, true, {from: operator}));
+            await expectRevert(exchange.setOperator(newOperator, true, {from: anyUser}))
         })
     });
 
