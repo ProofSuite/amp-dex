@@ -4,7 +4,15 @@ import Web3 from 'web3'
 import bnChai from 'bn-chai'
 import {ether, wrappedEther} from './constants'
 import {expectRevert} from './helpers'
-import {getCancelOrderAddresses, getCancelOrderValues, getOrderHash, getTradeHash} from "./utils/exchange";
+import {
+    getCancelOrderAddresses,
+    getCancelOrderValues,
+    getOrderHash,
+    getTradeHash,
+    getMatchOrderAddresses,
+    getMatchOrderValues
+} from "./utils/exchange";
+import {getBalances} from "./utils/balances";
 
 chai
     .use(require('chai-bignumber')(web3.BigNumber))
@@ -33,6 +41,8 @@ contract('Exchange', (accounts) => {
     let weth;
     let token1;
     let token2;
+
+    let initialBalances;
 
     describe('Initialisation', async () => {
         beforeEach(async () => {
@@ -529,5 +539,1091 @@ contract('Exchange', (accounts) => {
             tradeCanceled.should.be.equal(false);
         })
     });
+
+    describe('Trading', async () => {
+        describe('', async () => {
+            beforeEach(async () => {
+                weth = await WETH.new();
+                exchange = await Exchange.new(weth.address, feeAccount);
+                token1 = await Token1.new(trader1, 1000);
+                token2 = await Token2.new(trader2, 1000);
+
+                await exchange.setOperator(operator, true, {from: owner});
+
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+            });
+
+            it('should execute if trade.amount < order.amountBuy (Token against Token)', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 500,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balances.trader1BalanceOfToken1.should.be.bignumber.equal(500);
+                balances.trader1BalanceOfToken2.should.be.bignumber.equal(500);
+                balances.trader1BalanceOfWETH.should.be.bignumber.equal(9.5e17);
+                balances.trader2BalanceOfToken1.should.be.bignumber.equal(500);
+                balances.trader2BalanceOfToken2.should.be.bignumber.equal(500);
+                balances.trader2BalanceOfWETH.should.be.bignumber.equal(9.5e17);
+                balances.feeAccountBalanceOfWETH.should.be.bignumber.equal(1e17)
+            });
+
+            it('should execute if trade.amount = order.amountBuy (Token against Token)', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balances.trader1BalanceOfToken1.should.be.bignumber.equal(0);
+                balances.trader1BalanceOfToken2.should.be.bignumber.equal(1000);
+                balances.trader1BalanceOfWETH.should.be.bignumber.equal(9e17);
+                balances.trader2BalanceOfToken1.should.be.bignumber.equal(1000);
+                balances.trader2BalanceOfToken2.should.be.bignumber.equal(0);
+                balances.trader2BalanceOfWETH.should.be.bignumber.equal(9e17);
+                balances.feeAccountBalanceOfWETH.should.be.bignumber.equal(2e17)
+            });
+
+            it('should not execute if trade.amount > order.amountBuy (Token against Token)', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 500,
+                    amountSell: 500,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 600,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+
+            });
+
+            it('should execute if trade.amount < order.amountBuy (Token against WETH)', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 5e17,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: weth.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 2.5e17,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balances.trader1BalanceOfToken1.should.be.bignumber.equal(500);
+                balances.trader1BalanceOfWETH.should.be.bignumber.equal(1.20e18);
+                balances.trader2BalanceOfToken1.should.be.bignumber.equal(500);
+                balances.trader2BalanceOfWETH.should.be.bignumber.equal(7E17);
+                balances.feeAccountBalanceOfWETH.should.be.bignumber.equal(1e17)
+            });
+
+            it('should execute if trade.amount = order.amountBuy (Token against WETH)', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 5e17,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: weth.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 5e17,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balances.trader1BalanceOfToken1.should.be.bignumber.equal(0);
+                balances.trader1BalanceOfWETH.should.be.bignumber.equal(1.4e18);
+                balances.trader2BalanceOfToken1.should.be.bignumber.equal(1000);
+                balances.trader2BalanceOfWETH.should.be.bignumber.equal(4E17);
+                balances.feeAccountBalanceOfWETH.should.be.bignumber.equal(2e17)
+            });
+
+            it('should not execute if trade.amount > order.amountBuy (Token against WETH)', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 5e17,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: weth.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 6e17,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if maker signature is invalid', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber - 1,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader2);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if taker signature is invalid', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber - 1,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader1);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if order has expired', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber - 1,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if trade is already completed', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 500,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let trade1Hash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+
+                let orderValuesForTrade1 = getMatchOrderValues(order, trade);
+                let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade);
+
+                await exchange.executeTrade(orderValuesForTrade1, orderAddressesForTrade1, [v1, v2], [r1, s1, r2, s2]);
+
+                let balancesBefore = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValuesForTrade1,
+                    orderAddressesForTrade1,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValuesForTrade1, orderAddressesForTrade1, [v1, v2], [r1, s1, r2, s2]);
+
+                let balancesAfter = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balancesAfter.should.be.deep.equals(balancesBefore);
+            });
+
+            it('should not execute if trade is already cancelled', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 500,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let trade1Hash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+
+                let orderValuesForTrade1 = getMatchOrderValues(order, trade);
+                let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade);
+
+                await exchange.cancelTrade(
+                    orderHash,
+                    trade.amount,
+                    trade.tradeNonce,
+                    trade.taker,
+                    v2,
+                    r2,
+                    s2,
+                    {from: trader2});
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValuesForTrade1,
+                    orderAddressesForTrade1,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                await exchange.executeTrade(orderValuesForTrade1, orderAddressesForTrade1, [v1, v2], [r1, s1, r2, s2]);
+
+                tradeExecutionResult.should.be.equal(false);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if rounding error too large', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 3000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 100,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let trade1Hash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+
+                let orderValuesForTrade1 = getMatchOrderValues(order, trade);
+                let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValuesForTrade1,
+                    orderAddressesForTrade1,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+
+            it('should not execute if order is already completed', async () => {
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade1 = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let trade1Hash = getTradeHash(orderHash, trade1);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+
+                let orderValuesForTrade1 = getMatchOrderValues(order, trade1);
+                let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade1);
+
+                await exchange.executeTrade(
+                    orderValuesForTrade1,
+                    orderAddressesForTrade1,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                let balancesBefore = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let trade2 = {
+                    amount: 100,
+                    tradeNonce: 2,
+                    taker: trader2
+                };
+
+                let trade2Hash = getTradeHash(orderHash, trade2);
+
+                let {message: message3, messageHash: messageHash3, r: r3, s: s3, v: v3} = web3.eth.accounts.sign(trade2Hash, privateKeyOfTrader2);
+
+                let orderValuesForTrade2 = getMatchOrderValues(order, trade2);
+                let orderAddressesForTrade2 = getMatchOrderAddresses(order, trade2);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValuesForTrade2,
+                    orderAddressesForTrade2,
+                    [v1, v3],
+                    [r1, s1, r3, s3]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValuesForTrade2, orderAddressesForTrade2, [v1, v3], [r1, s1, r3, s3]);
+
+                let balancesAfter = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balancesAfter.should.be.deep.equals(balancesBefore);
+            })
+        });
+
+        describe('', async () => {
+            beforeEach(async () => {
+                weth = await WETH.new();
+                exchange = await Exchange.new(weth.address, feeAccount);
+                token1 = await Token1.new(trader1, 1000);
+                token2 = await Token2.new(trader2, 1000)
+            });
+
+            it('should not execute if maker does not have enough sellToken balance', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1500, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1500,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if exchange does not have enough sellToken allowance from maker', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 500, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if maker does not have enough WETH to pay maker fees for trade', async () => {
+                await weth.deposit({from: trader1, value: 5e16});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if exchange does not have enough WETH allowance from maker to pay maker fee for trade', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, 5e16, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if taker does not have enough buyToken balance', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 1500, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1500,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1500,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if exchange does not have enough buyToken allowance from taker', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 500, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if taker does not have enough WETH to pay taker fees for trade', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: 5e16});
+                weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            });
+
+            it('should not execute if exchange does not have enough WETH allowance from taker to pay taker fee for trade', async () => {
+                await weth.deposit({from: trader1, value: ether});
+                weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+                await weth.deposit({from: trader2, value: ether});
+                weth.approve(exchange.address, 5e16, {from: trader2});
+
+                await token1.approve(exchange.address, 1000, {from: trader1});
+                await token2.approve(exchange.address, 1000, {from: trader2});
+
+                initialBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+
+                let initialBlockNumber = await web3.eth.getBlockNumber();
+
+                let order = {
+                    amountBuy: 1000,
+                    amountSell: 1000,
+                    expires: initialBlockNumber + 10,
+                    nonce: 1,
+                    feeMake: 1e17,
+                    feeTake: 1e17,
+                    tokenBuy: token2.address,
+                    tokenSell: token1.address,
+                    maker: trader1
+                };
+
+                let trade = {
+                    amount: 1000,
+                    tradeNonce: 1,
+                    taker: trader2
+                };
+
+                let orderHash = getOrderHash(exchange, order);
+                let tradeHash = getTradeHash(orderHash, trade);
+
+                let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+                let orderValues = getMatchOrderValues(order, trade);
+                let orderAddresses = getMatchOrderAddresses(order, trade);
+
+                let tradeExecutionResult = await exchange.executeTrade.call(
+                    orderValues,
+                    orderAddresses,
+                    [v1, v2],
+                    [r1, s1, r2, s2]
+                );
+
+                tradeExecutionResult.should.be.equal(false);
+
+                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                currentBalances.should.be.deep.equals(initialBalances);
+            })
+        })
+    })
 
 });
