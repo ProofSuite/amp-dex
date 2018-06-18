@@ -95,4 +95,34 @@ contract('Exchange', (accounts) => {
         })
     });
 
+    describe('Fee account management', async () => {
+        beforeEach(async () => {
+            weth = await WETH.new();
+            exchange = await Exchange.new(weth.address, feeAccount);
+
+            await exchange.setOperator(operator, true, {from: owner})
+        });
+
+        it('should set fee account if requested by owner', async () => {
+            let expectedNewFeeAccount = accounts[3];
+            await exchange.setFeeAccount(expectedNewFeeAccount, {from: owner});
+
+            let newFeeAccount = await exchange.feeAccount.call();
+            newFeeAccount.should.be.equal(expectedNewFeeAccount)
+        });
+
+        it('should set fee account if requested by operator', async () => {
+            let expectedNewFeeAccount = accounts[3];
+            await exchange.setFeeAccount(expectedNewFeeAccount, {from: operator});
+
+            let newFeeAccount = await exchange.feeAccount.call();
+            newFeeAccount.should.be.equal(expectedNewFeeAccount)
+        });
+
+        it('should not set fee account if not requested by owner or operator', async () => {
+            let expectedNewFeeAccount = accounts[3];
+            await expectRevert(exchange.setFeeAccount(expectedNewFeeAccount, {from: anyUser}))
+        })
+    });
+
 });
