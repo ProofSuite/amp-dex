@@ -4,7 +4,7 @@ import Web3 from 'web3'
 import bnChai from 'bn-chai'
 import {ether, wrappedEther} from './constants'
 import {expectRevert} from './helpers'
-import {getCancelOrderAddresses, getCancelOrderValues, getOrderHash} from "./utils/exchange";
+import {getCancelOrderAddresses, getCancelOrderValues, getOrderHash, getTradeHash} from "./utils/exchange";
 
 chai
     .use(require('chai-bignumber')(web3.BigNumber))
@@ -315,6 +315,218 @@ contract('Exchange', (accounts) => {
 
             let orderFill = await exchange.filled.call(orderHash);
             orderFill.should.be.bignumber.equal(0);
+        })
+    });
+
+    describe('Cancelling trade', async () => {
+        beforeEach(async () => {
+            weth = await WETH.new();
+            exchange = await Exchange.new(weth.address, feeAccount);
+            token1 = await Token1.new(trader1, 1000);
+            token2 = await Token2.new(trader2, 1000);
+
+            await exchange.setOperator(operator, true, {from: owner});
+
+            await weth.deposit({from: trader1, value: ether});
+            weth.approve(exchange.address, wrappedEther, {from: trader1});
+
+            await weth.deposit({from: trader2, value: ether});
+            weth.approve(exchange.address, wrappedEther, {from: trader2});
+
+            await token1.approve(exchange.address, 1000, {from: trader1});
+            await token2.approve(exchange.address, 1000, {from: trader2})
+        });
+
+        it('should execute if requested by taker of trade', async () => {
+            let initialBlockNumber = await web3.eth.getBlockNumber();
+
+            let order = {
+                amountBuy: 1000,
+                amountSell: 1000,
+                expires: initialBlockNumber + 10,
+                nonce: 1,
+                feeMake: 1e17,
+                feeTake: 1e17,
+                tokenBuy: token2.address,
+                tokenSell: token1.address,
+                maker: trader1
+            };
+
+            let trade = {
+                amount: 500,
+                tradeNonce: 1,
+                taker: trader2
+            };
+
+            let orderHash = getOrderHash(exchange, order);
+            let tradeHash = getTradeHash(orderHash, trade);
+
+            let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+            await exchange.cancelTrade(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: trader2});
+
+            let tradeCanceled = await exchange.traded.call(tradeHash);
+            tradeCanceled.should.be.equal(true)
+        });
+
+        it('should not execute if not requested by taker of trade', async () => {
+            let initialBlockNumber = await web3.eth.getBlockNumber();
+
+            let order = {
+                amountBuy: 1000,
+                amountSell: 1000,
+                expires: initialBlockNumber + 10,
+                nonce: 1,
+                feeMake: 1e17,
+                feeTake: 1e17,
+                tokenBuy: token2.address,
+                tokenSell: token1.address,
+                maker: trader1
+            };
+
+            let trade = {
+                amount: 500,
+                tradeNonce: 1,
+                taker: trader2
+            };
+
+            let orderHash = getOrderHash(exchange, order);
+            let tradeHash = getTradeHash(orderHash, trade);
+
+            let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+            let tradeCancellationResultForOwner = await exchange.cancelTrade.call(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: owner});
+
+            let tradeCancellationResultForOperator = await exchange.cancelTrade.call(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: operator});
+
+            let tradeCancellationResultForAnyUser = await exchange.cancelTrade.call(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: anyUser});
+
+            tradeCancellationResultForOwner.should.be.equal(false);
+            tradeCancellationResultForOperator.should.be.equal(false);
+            tradeCancellationResultForAnyUser.should.be.equal(false);
+
+            exchange.cancelTrade(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: owner});
+
+            let tradedValueAfterTradeCancelByOwner = await exchange.traded.call(tradeHash);
+            tradedValueAfterTradeCancelByOwner.should.be.equal(false);
+
+            exchange.cancelTrade(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: operator});
+
+            let tradedValueAfterTradeCancelByOperator = await exchange.traded.call(tradeHash);
+            tradedValueAfterTradeCancelByOperator.should.be.equal(false);
+
+            exchange.cancelTrade(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: anyUser});
+
+            let tradedValueAfterTradeCancelByAnyUser = await exchange.traded.call(tradeHash);
+            tradedValueAfterTradeCancelByAnyUser.should.be.equal(false)
+        });
+
+        it('should not execute if taker signature is invalid', async () => {
+            let initialBlockNumber = await web3.eth.getBlockNumber();
+
+            let order = {
+                amountBuy: 1000,
+                amountSell: 1000,
+                expires: initialBlockNumber + 10,
+                nonce: 1,
+                feeMake: 1e17,
+                feeTake: 1e17,
+                tokenBuy: token2.address,
+                tokenSell: token1.address,
+                maker: trader1
+            };
+
+            let trade = {
+                amount: 500,
+                tradeNonce: 1,
+                taker: trader2
+            };
+
+            let orderHash = getOrderHash(exchange, order);
+            let tradeHash = getTradeHash(orderHash, trade);
+
+            let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader1);
+
+            let tradeCancellationResult = await exchange.cancelTrade.call(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: trader2});
+
+            tradeCancellationResult.should.be.equal(false);
+
+            await exchange.cancelTrade(
+                orderHash,
+                trade.amount,
+                trade.tradeNonce,
+                trade.taker,
+                v2,
+                r2,
+                s2,
+                {from: trader2});
+
+            let tradeCanceled = await exchange.traded.call(tradeHash);
+            tradeCanceled.should.be.equal(false);
         })
     });
 
