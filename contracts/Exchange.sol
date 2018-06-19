@@ -189,7 +189,6 @@ contract Exchange is Owned {
             emit LogError(uint8(Errors.TRADE_ALREADY_COMPLETED_OR_CANCELLED), tradeHash);
             return false;
         }
-        traded[tradeHash] = true;
 
         if (filled[orderHash].add(trade.amount) > order.amountBuy) {
             emit LogError(uint8(Errors.TRADE_AMOUNT_TOO_BIG), orderHash);
@@ -206,6 +205,7 @@ contract Exchange is Owned {
             return false;
         }
 
+        traded[tradeHash] = true;
         uint filledAmountSell = getPartialAmount(trade.amount, order.amountBuy, order.amountSell);
 
         filled[orderHash] = filled[orderHash].add(trade.amount);
