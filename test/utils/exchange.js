@@ -11,7 +11,7 @@ export const getOrderHash = (exchange, order) => {
     order.nonce,
     order.maker
   )
-}
+};
 
 export const getTradeHash = (orderHash, trade) => {
   return keccak256(
@@ -20,18 +20,7 @@ export const getTradeHash = (orderHash, trade) => {
     trade.taker,
     trade.tradeNonce
   )
-}
-
-export const getWithdrawalHash = (exchange, withdrawal) => {
-  return keccak256(
-    exchange.address,
-    withdrawal.token,
-    withdrawal.amount,
-    withdrawal.trader,
-    withdrawal.receiver,
-    withdrawal.nonce
-  )
-}
+};
 
 export const getMatchOrderValues = (order, trade) => {
   return [
@@ -44,7 +33,7 @@ export const getMatchOrderValues = (order, trade) => {
     trade.amount,
     trade.tradeNonce
   ]
-}
+};
 
 export const getMatchOrderAddresses = (order, trade) => {
   return [
@@ -53,7 +42,7 @@ export const getMatchOrderAddresses = (order, trade) => {
     order.maker,
     trade.taker
   ]
-}
+};
 
 
 export const getCancelOrderValues = (order) => {
@@ -63,7 +52,7 @@ export const getCancelOrderValues = (order) => {
     order.expires,
     order.nonce
   ]
-}
+};
 
 export const getCancelOrderAddresses = (order) => {
   return [
@@ -71,4 +60,4 @@ export const getCancelOrderAddresses = (order) => {
     order.tokenSell,
     order.maker
   ]
-}
+};
