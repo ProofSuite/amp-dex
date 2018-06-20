@@ -20,8 +20,7 @@ contract Exchange is Owned {
 
     string constant public VERSION = "1.0.0";
 
-    address public WETH_TOKEN_CONTRACT;
-
+    address public wethToken;
     address public feeAccount;
     mapping(address => bool) public operators;
     mapping(bytes32 => uint) public filled;       // Mappings of orderHash => amount of amountBuy filled.
@@ -86,7 +85,7 @@ contract Exchange is Owned {
     }
 
     constructor(address _wethToken, address _feeAccount) public {
-        WETH_TOKEN_CONTRACT = _wethToken;
+        wethToken = _wethToken;
         feeAccount = _feeAccount;
     }
 
@@ -94,7 +93,7 @@ contract Exchange is Owned {
     /// @param _wethToken An address to set as WETH token address.
     /// @return Success on setting WETH token address.
     function setWethToken(address _wethToken) public onlyOwner returns (bool) {
-        WETH_TOKEN_CONTRACT = _wethToken;
+        wethToken = _wethToken;
         return true;
     }
 
@@ -210,12 +209,12 @@ contract Exchange is Owned {
 
         if (order.feeMake > 0) {
             uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
-            require(ERC20(WETH_TOKEN_CONTRACT).transferFrom(order.maker, feeAccount, paidFeeMake));
+            require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));
         }
 
         if (order.feeTake > 0) {
             uint paidFeeTake = getPartialAmount(trade.amount, order.amountBuy, order.feeTake);
-            require(ERC20(WETH_TOKEN_CONTRACT).transferFrom(trade.taker, feeAccount, paidFeeTake));
+            require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
         }
 
         emit LogTrade(
@@ -437,17 +436,17 @@ contract Exchange is Owned {
         uint amountBuyToFill = trade.amount;
         uint amountSellFilled = getPartialAmount(amountBuyToFill, order.amountBuy, order.amountSell);
 
-        bool isMakerTokenWETH = order.tokenSell == WETH_TOKEN_CONTRACT;
-        bool isTakerTokenWETH = order.tokenBuy == WETH_TOKEN_CONTRACT;
+        bool isMakerTokenWETH = order.tokenSell == wethToken;
+        bool isTakerTokenWETH = order.tokenBuy == wethToken;
         uint paidMakerFee = getPartialAmount(amountBuyToFill, order.amountBuy, order.feeMake);
         uint paidTakerFee = getPartialAmount(amountBuyToFill, order.amountBuy, order.feeTake);
         uint requiredMakerWETH = isMakerTokenWETH ? amountSellFilled.add(paidMakerFee) : paidMakerFee;
         uint requiredTakerWETH = isTakerTokenWETH ? amountBuyToFill.add(paidTakerFee) : paidTakerFee;
 
-        if (getBalance(WETH_TOKEN_CONTRACT, order.maker) < requiredMakerWETH
-        || getAllowance(WETH_TOKEN_CONTRACT, order.maker) < requiredMakerWETH
-        || getBalance(WETH_TOKEN_CONTRACT, taker) < requiredTakerWETH
-        || getAllowance(WETH_TOKEN_CONTRACT, taker) < requiredTakerWETH
+        if (getBalance(wethToken, order.maker) < requiredMakerWETH
+        || getAllowance(wethToken, order.maker) < requiredMakerWETH
+        || getBalance(wethToken, taker) < requiredTakerWETH
+        || getAllowance(wethToken, taker) < requiredTakerWETH
         ) return false;
 
         if (!isMakerTokenWETH && (getBalance(order.tokenSell, order.maker) < amountSellFilled // Don't double check makerToken if WETH
