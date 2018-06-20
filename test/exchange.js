@@ -113,7 +113,12 @@ contract('Exchange', (accounts) => {
             let newOperator = accounts[7];
             await expectRevert(exchange.setOperator(newOperator, true, {from: operator}));
             await expectRevert(exchange.setOperator(newOperator, true, {from: anyUser}))
-        })
+        });
+
+        it('should not set zero address as operator', async () => {
+            let newOperator = "0x0000000000000000000000000000000000000000";
+            await expectRevert(exchange.setOperator(newOperator, true, {from: owner}));
+        });
     });
 
     describe('Fee account management', async () => {
