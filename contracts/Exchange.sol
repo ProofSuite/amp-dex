@@ -101,7 +101,7 @@ contract Exchange is Owned {
     /// @dev Sets the address of fees account.
     /// @param _feeAccount An address to set as fees account.
     /// @return Success on setting fees account.
-    function setFeeAccount(address _feeAccount) public onlyOperator returns (bool) {
+    function setFeeAccount(address _feeAccount) public onlyOwner returns (bool) {
         feeAccount = _feeAccount;
         return true;
     }
