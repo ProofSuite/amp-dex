@@ -73,17 +73,8 @@ contract Exchange is Owned {
         address maker;      // Ethereum address of the order maker
     }
 
-    struct TrimmedOrder {
-        uint256 amountBuy;
-        uint256 amountSell;
-        uint256 expires;
-        uint256 nonce;
-        address tokenBuy;
-        address tokenSell;
-        address maker;
-    }
-
     struct Trade {
+        bytes32 orderHash;  // Keccak-256 hash of the order to which the trade is linked
         uint256 amount;     // The amount of buy tokens asked in the order
         uint256 tradeNonce; // A taker wise unique incrementing integer value assigned to the trade
         address taker;      // Ethereum address of the trade taker
@@ -161,14 +152,16 @@ contract Exchange is Owned {
             maker : orderAddresses[2]
             });
 
+        bytes32 orderHash = getOrderHash(order);
+
         Trade memory trade = Trade({
+            orderHash : orderHash,
             amount : orderValues[6],
             tradeNonce : orderValues[7],
             taker : orderAddresses[3]
             });
 
-        bytes32 orderHash = keccak256(abi.encodePacked(this, order.tokenBuy, order.amountBuy, order.tokenSell, order.amountSell, order.expires, order.nonce, order.maker));
-        bytes32 tradeHash = keccak256(abi.encodePacked(orderHash, trade.amount, trade.taker, trade.tradeNonce));
+        bytes32 tradeHash = getTradeHash(trade);
 
         if (!isValidSignature(order.maker, orderHash, v[0], rs[0], rs[1])) {
             emit LogError(uint8(Errors.MAKER_SIGNATURE_INVALID), orderHash);
@@ -238,39 +231,33 @@ contract Exchange is Owned {
     }
 
     /// @dev Cancels the input order.
-    /// @param orderValues Array of order's amountBuy, amountSell, expires & nonce values.
-    /// @param orderAddresses Array of order's tokenBuy, tokenSell, maker & taker addresses.
+    /// @param orderValues Array of order's amountBuy, amountSell, expires, nonce, feeMake & feeTake values.
+    /// @param orderAddresses Array of order's tokenBuy, tokenSell & maker addresses.
     /// @param v ECDSA signature parameter v.
     /// @param r ECDSA signature parameters r.
     /// @param s ECDSA signature parameters s.
     /// @return Success or failure of order cancellation.
     function cancelOrder(
-        uint256[5] orderValues,
-        address[4] orderAddresses,
+        uint256[6] orderValues,
+        address[3] orderAddresses,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) public returns (bool)
     {
-        TrimmedOrder memory order = TrimmedOrder({
+        Order memory order = Order({
             amountBuy : orderValues[0],
             amountSell : orderValues[1],
             expires : orderValues[2],
             nonce : orderValues[3],
+            feeMake : orderValues[4],
+            feeTake : orderValues[5],
             tokenBuy : orderAddresses[0],
             tokenSell : orderAddresses[1],
             maker : orderAddresses[2]
             });
 
-        bytes32 orderHash = keccak256(abi.encodePacked(
-                this,
-                order.tokenBuy,
-                order.amountBuy,
-                order.tokenSell,
-                order.amountSell,
-                order.expires,
-                order.nonce,
-                order.maker));
+        bytes32 orderHash = getOrderHash(order);
 
         if (!isValidSignature(msg.sender, orderHash, v, r, s)) {
             emit LogError(uint8(Errors.SIGNATURE_INVALID), orderHash);
@@ -312,7 +299,14 @@ contract Exchange is Owned {
     public
     returns (bool)
     {
-        bytes32 tradeHash = keccak256(abi.encodePacked(orderHash, amount, taker, tradeNonce));
+        Trade memory trade = Trade({
+            orderHash : orderHash,
+            amount : amount,
+            tradeNonce : tradeNonce,
+            taker : taker
+            });
+
+        bytes32 tradeHash = getTradeHash(trade);
 
         if (!isValidSignature(msg.sender, tradeHash, v, r, s)) {
             emit LogError(uint8(Errors.SIGNATURE_INVALID), tradeHash);
@@ -388,6 +382,45 @@ contract Exchange is Owned {
     /*
     *   Internal functions
     */
+
+
+    /// @dev Calculates Keccak-256 hash of order.
+    /// @param order Order that will be hased.
+    /// @return Keccak-256 hash of order.
+    function getOrderHash(Order order)
+    internal
+    view
+    returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(
+                address(this),
+                order.maker,
+                order.tokenSell,
+                order.tokenBuy,
+                order.amountSell,
+                order.amountBuy,
+                order.feeMake,
+                order.feeTake,
+                order.expires,
+                order.nonce
+            ));
+    }
+
+    /// @dev Calculates Keccak-256 hash of trade.
+    /// @param trade Trade that will be hashed.
+    /// @return Keccak-256 hash of trade.
+    function getTradeHash(Trade trade)
+    internal
+    pure
+    returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(
+                trade.orderHash,
+                trade.taker,
+                trade.amount,
+                trade.tradeNonce
+            ));
+    }
 
     /// @dev Checks if any order transfers will fail.
     /// @param order Order struct of params that will be checked.
