@@ -61,7 +61,7 @@ contract('Exchange', (accounts) => {
         });
 
         it('should initialise WETH token contract correctly', async () => {
-            let initializedWethTokenContract = await exchange.WETH_TOKEN_CONTRACT.call();
+            let initializedWethTokenContract = await exchange.wethToken.call();
             initializedWethTokenContract.should.be.equal(weth.address)
         })
     });
@@ -76,7 +76,7 @@ contract('Exchange', (accounts) => {
             let expectedWethTokenAddress = accounts[6];
             await exchange.setWethToken(expectedWethTokenAddress, {from: owner});
 
-            let wethTokenContractAddress = await exchange.WETH_TOKEN_CONTRACT.call();
+            let wethTokenContractAddress = await exchange.wethToken.call();
             wethTokenContractAddress.should.be.equal(expectedWethTokenAddress)
         });
 
