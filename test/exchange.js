@@ -132,18 +132,16 @@ contract('Exchange', (accounts) => {
             newFeeAccount.should.be.equal(expectedNewFeeAccount)
         });
 
-        it('should set fee account if requested by operator', async () => {
-            let expectedNewFeeAccount = accounts[3];
-            await exchange.setFeeAccount(expectedNewFeeAccount, {from: operator});
-
-            let newFeeAccount = await exchange.feeAccount.call();
-            newFeeAccount.should.be.equal(expectedNewFeeAccount)
-        });
-
         it('should not set fee account if not requested by owner or operator', async () => {
             let expectedNewFeeAccount = accounts[3];
-            await expectRevert(exchange.setFeeAccount(expectedNewFeeAccount, {from: anyUser}))
-        })
+            await expectRevert(exchange.setFeeAccount(expectedNewFeeAccount, {from: operator}));
+            await expectRevert(exchange.setFeeAccount(expectedNewFeeAccount, {from: anyUser}));
+        });
+
+        it('should not set zero address as fee account', async () => {
+            let newFeeAccount = "0x0000000000000000000000000000000000000000";
+            await expectRevert(exchange.setFeeAccount(newFeeAccount, {from: owner}));
+        });
     });
 
     describe('Cancelling order', async () => {
