@@ -1681,4 +1681,93 @@ contract('Exchange', (accounts) => {
             })
         })
     });
+
+    describe('Rounding error', () => {
+        it('should return false if there is a rounding error of 0.1%', async () => {
+            const numerator = 20;
+            const denominator = 999;
+            const target = 50;
+            // rounding error = ((20*50/999) - floor(20*50/999)) / (20*50/999) = 0.1%
+            const isRoundingError = await exchange.isRoundingError.call(numerator, denominator, target);
+            isRoundingError.should.be.equal(false)
+        });
+
+        it('should return false if there is a rounding of 0.09%', async () => {
+            const numerator = 20;
+            const denominator = 9991;
+            const target = 500;
+            // rounding error = ((20*500/9991) - floor(20*500/9991)) / (20*500/9991) = 0.09%
+            const isRoundingError = await exchange.isRoundingError.call(numerator, denominator, target);
+            isRoundingError.should.be.equal(false)
+        });
+
+        it('should return true if there is a rounding error of 0.11%', async () => {
+            const numerator = 20;
+            const denominator = 9989;
+            const target = 500;
+            // rounding error = ((20*500/9989) - floor(20*500/9989)) / (20*500/9989) = 0.11%
+            const isRoundingError = await exchange.isRoundingError.call(numerator, denominator, target);
+            isRoundingError.should.be.equal(true)
+        });
+
+        it('should return true if there is a rounding error > 0.1%', async () => {
+            const numerator = 3;
+            const denominator = 7;
+            const target = 10;
+            // rounding error = ((3*10/7) - floor(3*10/7)) / (3*10/7) = 6.67%
+            const isRoundingError = await exchange.isRoundingError.call(numerator, denominator, target);
+            isRoundingError.should.be.equal(true)
+        });
+
+        it('should return false when there is no rounding error', async () => {
+            const numerator = 1;
+            const denominator = 2;
+            const target = 10;
+
+            const isRoundingError = await exchange.isRoundingError.call(numerator, denominator, target);
+            isRoundingError.should.be.equal(false)
+        });
+
+        it('should return false when there is rounding error <= 0.1%', async () => {
+            const numerator = 76564;
+            const denominator = 676373677;
+            const target = 105762562;
+            // rounding error = ((76564*105762562/676373677) - floor(76564*105762562/676373677)) /
+            // (76564*105762562/676373677) = 0.0007%
+            const isRoundingError = await exchange.isRoundingError.call(numerator, denominator, target);
+            isRoundingError.should.be.equal(false)
+        });
+    });
+
+    describe('Partial amount', () => {
+        it('should return (numerator*target)/denominator', async () => {
+            const numerator = 1;
+            const denominator = 2;
+            const target = 10;
+
+            const partialAmount = await exchange.getPartialAmount.call(numerator, denominator, target);
+            const expectedPartialAmount = 5;
+            partialAmount.should.be.bignumber.equal(expectedPartialAmount);
+        });
+
+        it('should round down', async () => {
+            const numerator = 2;
+            const denominator = 3;
+            const target = 10;
+
+            const partialAmount = await exchange.getPartialAmount.call(numerator, denominator, target);
+            const expectedPartialAmount = 6;
+            partialAmount.should.be.bignumber.equal(expectedPartialAmount);
+        });
+
+        it('should round .5 down', async () => {
+            const numerator = 1;
+            const denominator = 20;
+            const target = 10;
+
+            const partialAmount = await exchange.getPartialAmount.call(numerator, denominator, target);
+            const expectedPartialAmount = 0;
+            partialAmount.should.be.bignumber.equal(expectedPartialAmount);
+        });
+    });
 });
