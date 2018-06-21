@@ -597,6 +597,12 @@ contract('Exchange', (accounts) => {
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
 
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(trade.amount);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(true);
+
                 let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 balances.trader1BalanceOfToken1.should.be.bignumber.equal(500);
                 balances.trader1BalanceOfToken2.should.be.bignumber.equal(500);
@@ -638,6 +644,12 @@ contract('Exchange', (accounts) => {
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(trade.amount);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(true);
 
                 let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 balances.trader1BalanceOfToken1.should.be.bignumber.equal(0);
@@ -690,6 +702,12 @@ contract('Exchange', (accounts) => {
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
 
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
+
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
 
@@ -726,6 +744,12 @@ contract('Exchange', (accounts) => {
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(trade.amount);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(true);
 
                 let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 balances.trader1BalanceOfToken1.should.be.bignumber.equal(500);
@@ -766,6 +790,12 @@ contract('Exchange', (accounts) => {
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(trade.amount);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(true);
 
                 let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 balances.trader1BalanceOfToken1.should.be.bignumber.equal(0);
@@ -816,6 +846,12 @@ contract('Exchange', (accounts) => {
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
 
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
+
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
             });
@@ -860,6 +896,12 @@ contract('Exchange', (accounts) => {
                 tradeExecutionResult.should.be.equal(false);
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -906,6 +948,12 @@ contract('Exchange', (accounts) => {
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
 
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
+
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
             });
@@ -951,6 +999,12 @@ contract('Exchange', (accounts) => {
 
                 await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
 
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
+
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
             });
@@ -977,10 +1031,10 @@ contract('Exchange', (accounts) => {
                 };
 
                 let orderHash = getOrderHash(exchange, order);
-                let trade1Hash = getTradeHash(orderHash, trade);
+                let tradeHash = getTradeHash(orderHash, trade);
 
                 let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
-                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
 
                 let orderValuesForTrade1 = getMatchOrderValues(order, trade);
                 let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade);
@@ -999,6 +1053,12 @@ contract('Exchange', (accounts) => {
                 tradeExecutionResult.should.be.equal(false);
 
                 await exchange.executeTrade(orderValuesForTrade1, orderAddressesForTrade1, [v1, v2], [r1, s1, r2, s2]);
+
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(trade.amount);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(true);
 
                 let balancesAfter = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 balancesAfter.should.be.deep.equals(balancesBefore);
@@ -1026,10 +1086,10 @@ contract('Exchange', (accounts) => {
                 };
 
                 let orderHash = getOrderHash(exchange, order);
-                let trade1Hash = getTradeHash(orderHash, trade);
+                let tradeHash = getTradeHash(orderHash, trade);
 
                 let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
-                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
 
                 let orderValuesForTrade1 = getMatchOrderValues(order, trade);
                 let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade);
@@ -1054,6 +1114,12 @@ contract('Exchange', (accounts) => {
                 await exchange.executeTrade(orderValuesForTrade1, orderAddressesForTrade1, [v1, v2], [r1, s1, r2, s2]);
 
                 tradeExecutionResult.should.be.equal(false);
+
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCancelled = await exchange.traded.call(tradeHash);
+                tradeCancelled.should.be.equal(true);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1081,10 +1147,10 @@ contract('Exchange', (accounts) => {
                 };
 
                 let orderHash = getOrderHash(exchange, order);
-                let trade1Hash = getTradeHash(orderHash, trade);
+                let tradeHash = getTradeHash(orderHash, trade);
 
                 let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
-                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(trade1Hash, privateKeyOfTrader2);
+                let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
 
                 let orderValuesForTrade1 = getMatchOrderValues(order, trade);
                 let orderAddressesForTrade1 = getMatchOrderAddresses(order, trade);
@@ -1098,10 +1164,15 @@ contract('Exchange', (accounts) => {
 
                 tradeExecutionResult.should.be.equal(false);
 
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
+
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
+
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
             });
-
 
             it('should not execute if order is already completed', async () => {
                 let initialBlockNumber = await web3.eth.getBlockNumber();
@@ -1140,7 +1211,7 @@ contract('Exchange', (accounts) => {
                     [r1, s1, r2, s2]
                 );
 
-                let balancesBefore = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                let balancesBeforeTrade2 = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
 
                 let trade2 = {
                     amount: 100,
@@ -1166,8 +1237,14 @@ contract('Exchange', (accounts) => {
 
                 await exchange.executeTrade(orderValuesForTrade2, orderAddressesForTrade2, [v1, v3], [r1, s1, r3, s3]);
 
-                let balancesAfter = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
-                balancesAfter.should.be.deep.equals(balancesBefore);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(order.amountBuy);
+
+                let trade2Completed = await exchange.traded.call(trade2Hash);
+                trade2Completed.should.be.equal(false);
+
+                let balancesAfterTrade2 = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+                balancesAfterTrade2.should.be.deep.equals(balancesBeforeTrade2);
             })
         });
 
@@ -1220,16 +1297,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1276,16 +1350,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1332,16 +1403,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1388,16 +1456,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1444,16 +1509,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1500,16 +1562,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1556,16 +1615,13 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
@@ -1612,21 +1668,17 @@ contract('Exchange', (accounts) => {
                 let orderValues = getMatchOrderValues(order, trade);
                 let orderAddresses = getMatchOrderAddresses(order, trade);
 
-                let tradeExecutionResult = await exchange.executeTrade.call(
-                    orderValues,
-                    orderAddresses,
-                    [v1, v2],
-                    [r1, s1, r2, s2]
-                );
+                await expectRevert(exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]));
 
-                tradeExecutionResult.should.be.equal(false);
+                let orderFill = await exchange.filled.call(orderHash);
+                orderFill.should.be.bignumber.equal(0);
 
-                await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+                let tradeCompleted = await exchange.traded.call(tradeHash);
+                tradeCompleted.should.be.equal(false);
 
                 let currentBalances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
                 currentBalances.should.be.deep.equals(initialBalances);
             })
         })
-    })
-
+    });
 });

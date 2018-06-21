@@ -14,8 +14,7 @@ contract Exchange is Owned {
         ORDER_EXPIRED,                          // Order has already expired
         TRADE_ALREADY_COMPLETED_OR_CANCELLED,   // Trade has already been completed or it has been cancelled by taker
         TRADE_AMOUNT_TOO_BIG,                   // Trade buyToken amount bigger than the remianing amountBuy
-        ROUNDING_ERROR_TOO_LARGE,               // Rounding error too large
-        INSUFFICIENT_BALANCE_OR_ALLOWANCE       // Maker/Taker has insufficient balance or allowance for token transfer
+        ROUNDING_ERROR_TOO_LARGE                // Rounding error too large
     }
 
     string constant public VERSION = "1.0.0";
@@ -194,11 +193,6 @@ contract Exchange is Owned {
             return false;
         }
 
-        if (!isTransferable(order, trade)) {
-            emit LogError(uint8(Errors.INSUFFICIENT_BALANCE_OR_ALLOWANCE), orderHash);
-            return false;
-        }
-
         traded[tradeHash] = true;
         uint filledAmountSell = getPartialAmount(trade.amount, order.amountBuy, order.amountSell);
 
@@ -320,7 +314,7 @@ contract Exchange is Owned {
     }
 
     /*
-    * Constant public functions
+    * Pure public functions
     */
 
     /// @dev Verifies that an order signature is valid.
@@ -423,63 +417,4 @@ contract Exchange is Owned {
             ));
     }
 
-    /// @dev Checks if any order transfers will fail.
-    /// @param order Order struct of params that will be checked.
-    /// @param trade Trade struct of params that will be checked.
-    /// @return Predicted result of transfers.
-    function isTransferable(Order order, Trade trade)
-    internal
-    view
-    returns (bool)
-    {
-        address taker = trade.taker;
-        uint amountBuyToFill = trade.amount;
-        uint amountSellFilled = getPartialAmount(amountBuyToFill, order.amountBuy, order.amountSell);
-
-        bool isMakerTokenWETH = order.tokenSell == wethToken;
-        bool isTakerTokenWETH = order.tokenBuy == wethToken;
-        uint paidMakerFee = getPartialAmount(amountBuyToFill, order.amountBuy, order.feeMake);
-        uint paidTakerFee = getPartialAmount(amountBuyToFill, order.amountBuy, order.feeTake);
-        uint requiredMakerWETH = isMakerTokenWETH ? amountSellFilled.add(paidMakerFee) : paidMakerFee;
-        uint requiredTakerWETH = isTakerTokenWETH ? amountBuyToFill.add(paidTakerFee) : paidTakerFee;
-
-        if (getBalance(wethToken, order.maker) < requiredMakerWETH
-        || getAllowance(wethToken, order.maker) < requiredMakerWETH
-        || getBalance(wethToken, taker) < requiredTakerWETH
-        || getAllowance(wethToken, taker) < requiredTakerWETH
-        ) return false;
-
-        if (!isMakerTokenWETH && (getBalance(order.tokenSell, order.maker) < amountSellFilled // Don't double check makerToken if WETH
-        || getAllowance(order.tokenSell, order.maker) < amountSellFilled)
-        ) return false;
-        if (!isTakerTokenWETH && (getBalance(order.tokenBuy, taker) < amountBuyToFill // Don't double check takerToken if WETH
-        || getAllowance(order.tokenBuy, taker) < amountBuyToFill)
-        ) return false;
-
-        return true;
-    }
-
-    /// @dev Get token balance of an address.
-    /// @param token Address of token.
-    /// @param owner Address of owner.
-    /// @return Token balance of owner.
-    function getBalance(address token, address owner)
-    internal
-    view
-    returns (uint)
-    {
-        return ERC20(token).balanceOf(owner);
-    }
-
-    /// @dev Get allowance of token given to TokenTransferProxy by an address.
-    /// @param token Address of token.
-    /// @param owner Address of owner.
-    /// @return Allowance of token given to TokenTransferProxy by owner.
-    function getAllowance(address token, address owner)
-    internal
-    view
-    returns (uint)
-    {
-        return ERC20(token).allowance(owner, address(this));
-    }
 }
