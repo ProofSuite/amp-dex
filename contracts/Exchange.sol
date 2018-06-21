@@ -317,7 +317,7 @@ contract Exchange is Owned {
     * Pure public functions
     */
 
-    /// @dev Verifies that an order signature is valid.
+    /// @dev Verifies that a signature is valid.
     /// @param signer address of signer.
     /// @param hash Signed Keccak-256 hash.
     /// @param v ECDSA signature parameter v.
