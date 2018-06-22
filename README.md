@@ -18,8 +18,10 @@ having to perform a blockchain transaction and pay the associated gas fees.
 ### Requirements :
 - OSX or Linux (Windows setup is likely possible but not covered in this guide)
 - Node (version 8.9.4 recommended)
-- Solidity Compiler (version 0.4.18 or other)
-- Ganache-cli (v6.0.3 or higher)
+- Solidity Compiler (v0.4.24)
+- Ganache-cli (v6.1.3)
+- Truffle (v4.1.12)
+- npm (version 6.1.0)
 
 
 ### Testing Environment Setup :
