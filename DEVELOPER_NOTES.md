@@ -66,6 +66,8 @@ correct order and that the smart contract balances stay in sync with the exchang
 sequence, Exchange provides the speed and user experience of centralized exchanges combined with the security and 
 auditability of decentralized exchanges.
 
+The concept is inspired by IDEX.
+
 ##  Why the exchange uses W-ETH & not pure ETH as fees?
 
 Decentralized platforms running on Ethereum use smart contracts to facilitate trades directly between users, every user needs
@@ -161,3 +163,5 @@ returns (bool)
     return errPercentageTimes1000000 > 1000;
 }
 ```
+
+The concept is inspired by 0x.
