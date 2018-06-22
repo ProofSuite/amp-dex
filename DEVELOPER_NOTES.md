@@ -92,3 +92,72 @@ trade as much as needed.
 
 - Simplifies the Exchange contract as the 'executeTrade' does not need to conditionally manage transfer of ERC20 tokens &
 ETH, Since ETH is replaced by W-ETH which follows ERC20 standard & can be managed similarly like other ERC20 token.
+
+
+##  Rounding error check process
+
+When matched orders are exrcuted, the trade amount by taker can be less than the buy token amount defined by maker. In this 
+case the order will be partially filled & the partial sell token amount to transfer to maker is calculated using 
+'getPartialAmount' function. 'getPartialAmount' involves division process & the actual value could be a fractional. 
+Unfortunaltely solidity does not support floating point type yet & hence the value would get floored/rounded out. This floored 
+value would be returned by 'getPartialAmount' function. 
+
+In order to prevent the maker from the loss caused due to the flooring of actual value, rounding error check is 
+implemented. The 'isRoundingError' functions checks wether the percentage rounding error exceeds 0.1%, if yes then the function returns 'true' else it returns 'false'.
+
+Formula to calculate % error is:
+```
+% Error = [|(Actual value - Accepted value)|/|Accepted value|] * 100
+```
+
+Here, 
+
+Actual value = floor((tradeAmount * tokenSellAmount)/tokenBuyAmount)  
+Accepted value = (tradeAmount * tokenSellAmount)/tokenBuyAmount 
+
+But before we substitute the equatons of 'Actual value' & 'Accepted value', We have : 
+```
+((a*b/c) - floor(a*b/c)) / (a*b/c) = ((a*b)%c)/(a*b)
+```
+
+So the % Error formula above can be simplied to :
+```
+% Error = [((tradeAmount * tokenSellAmount) % tokenBuyAmount) / (tradeAmount * tokenSellAmount)] * 100 
+```
+where (tradeAmount * tokenSellAmount) % tokenBuyAmount = R = the remainder of calculation. This simplifies the equation to :
+```
+% Error = [R / (tradeAmount * tokenSellAmount)] * 100 
+```
+
+
+Now the 'isRoundingError' functions checks wether the percentage rounding error exceeds 0.1%. So,
+```
+R / (tradeAmount * tokenSellAmount) * 100 > 0.1
+R / (tradeAmount * tokenSellAmount) > 0.001
+```
+
+Division in Solidity can only return an integer, so multiplying each side by 1000 yields:
+```
+1000 * R / (tradeAmount * tokenSellAmount) > 1
+```
+Integer division is still unable to detect 3 decimal places (for 0.001) so multiply by 1000 again to get 3 decimal places:
+```
+1,000,000 * R /(tradeAmount * tokenSellAmount) > 1000
+```
+If the calculation is greater than 1000, this means there's a rounding error greater than 0.001 and the function returns true.
+So the final implementaion becomes: 
+
+```
+function isRoundingError(uint numerator, uint denominator, uint target)
+public
+pure
+returns (bool)
+{
+    uint remainder = mulmod(target, numerator, denominator);
+    if (remainder == 0) return false;
+    // No rounding error.
+
+    uint errPercentageTimes1000000 = (remainder.mul(1000000)).div(numerator.mul(target));
+    return errPercentageTimes1000000 > 1000;
+}
+```
