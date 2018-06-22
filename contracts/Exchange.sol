@@ -25,6 +25,10 @@ contract Exchange is Owned {
     mapping(bytes32 => uint) public filled;       // Mappings of orderHash => amount of amountBuy filled.
     mapping(bytes32 => bool) public traded;       // Mappings of tradeHash => bool value representing whether the trade is completed(true) or incomplete(false).
 
+    event LogWethTokenUpdate(address oldWethToken, address newWethToken);
+    event LogFeeAccountUpdate(address oldFeeAccount, address newFeeAccount);
+    event LogOperatorUpdate(address operator, bool isOperator);
+
     event LogTrade(
         address indexed maker,
         address indexed taker,
@@ -92,6 +96,7 @@ contract Exchange is Owned {
     /// @param _wethToken An address to set as WETH token address.
     /// @return Success on setting WETH token address.
     function setWethToken(address _wethToken) public onlyOwner returns (bool) {
+        emit LogWethTokenUpdate(wethToken,_wethToken);
         wethToken = _wethToken;
         return true;
     }
@@ -101,6 +106,7 @@ contract Exchange is Owned {
     /// @return Success on setting fees account.
     function setFeeAccount(address _feeAccount) public onlyOwner returns (bool) {
         require(_feeAccount != address(0));
+        emit LogFeeAccountUpdate(feeAccount,_feeAccount);
         feeAccount = _feeAccount;
         return true;
     }
@@ -111,6 +117,7 @@ contract Exchange is Owned {
     /// @return Success on setting an operator.
     function setOperator(address _operator, bool _isOperator) public onlyOwner returns (bool) {
         require(_operator != address(0));
+        emit LogOperatorUpdate(_operator,_isOperator);
         operators[_operator] = _isOperator;
         return true;
     }
