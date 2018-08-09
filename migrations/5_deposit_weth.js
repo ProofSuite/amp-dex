@@ -1,5 +1,4 @@
 const WETH = artifacts.require('./contracts/utils/WETH9.sol');
-const Exchange = artifacts.require('./Exchange.sol');
 const Token1 = artifacts.require('./contracts/tokens/Token1.sol');
 const Token2 = artifacts.require('./contracts/tokens/Token2.sol');
 const Token3 = artifacts.require('./contracts/tokens/Token3.sol');
@@ -23,20 +22,18 @@ const Token20 = artifacts.require('./contracts/tokens/Token20.sol');
 
 const accounts = web3.eth.accounts;
 let weth;
-let exchange;
 
 
 module.exports = function (deployer) {
     WETH.deployed()
         .then(async (_weth) => {
-            let approvals = []
             weth = _weth;
-            exchange = await Exchange.deployed();
+            let deposits = []
 
             for(let account of accounts) {
-              approvals.push(weth.approve(exchange.address, 1e18, { from: account }))
+              deposits.push(weth.deposit({ from: account, value: 1e18 }))
             }
 
-            await Promise.all(approvals)
+            await Promise.all(deposits)
         })
 };
