@@ -21,8 +21,8 @@ chai
 
 const WETH = artifacts.require('./utils/WETH9.sol');
 const Exchange = artifacts.require('./Exchange.sol');
-const Token1 = artifacts.require('./contracts/tokens/Token1.sol');
-const Token2 = artifacts.require('./contracts/tokens/Token2.sol');
+const BNB = artifacts.require('./contracts/tokens/BNB.sol');
+const OMG = artifacts.require('./contracts/tokens/OMG.sol');
 
 contract('Exchange', (accounts) => {
     let web3 = new Web3('http://localhost:8545');
@@ -153,8 +153,8 @@ contract('Exchange', (accounts) => {
         beforeEach(async () => {
             weth = await WETH.new();
             exchange = await Exchange.new(weth.address, feeAccount);
-            token1 = await Token1.new(trader1, 1000);
-            token2 = await Token2.new(trader2, 1000);
+            token1 = await BNB.new(trader1, 1000);
+            token2 = await OMG.new(trader2, 1000);
 
             await exchange.setOperator(operator, true, {from: owner});
 
@@ -335,8 +335,8 @@ contract('Exchange', (accounts) => {
         beforeEach(async () => {
             weth = await WETH.new();
             exchange = await Exchange.new(weth.address, feeAccount);
-            token1 = await Token1.new(trader1, 1000);
-            token2 = await Token2.new(trader2, 1000);
+            token1 = await BNB.new(trader1, 1000);
+            token2 = await OMG.new(trader2, 1000);
 
             await exchange.setOperator(operator, true, {from: owner});
 
@@ -548,8 +548,8 @@ contract('Exchange', (accounts) => {
             beforeEach(async () => {
                 weth = await WETH.new();
                 exchange = await Exchange.new(weth.address, feeAccount);
-                token1 = await Token1.new(trader1, 1000);
-                token2 = await Token2.new(trader2, 1000);
+                token1 = await BNB.new(trader1, 1000);
+                token2 = await OMG.new(trader2, 1000);
 
                 await exchange.setOperator(operator, true, {from: owner});
 
@@ -1252,8 +1252,8 @@ contract('Exchange', (accounts) => {
             beforeEach(async () => {
                 weth = await WETH.new();
                 exchange = await Exchange.new(weth.address, feeAccount);
-                token1 = await Token1.new(trader1, 1000);
-                token2 = await Token2.new(trader2, 1000)
+                token1 = await BNB.new(trader1, 1000);
+                token2 = await OMG.new(trader2, 1000)
             });
 
             it('should not execute if maker does not have enough sellToken balance', async () => {

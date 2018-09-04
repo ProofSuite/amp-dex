@@ -10,7 +10,7 @@ import '../utils/Owned.sol';
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract Token7 is Owned {
+contract KNC is Owned {
 
   using SafeMath for uint256;
 
@@ -24,9 +24,9 @@ contract Token7 is Owned {
 
   uint256 totalSupply_;
   bool public mintingFinished = false;
-  string public constant symbol = "TOK7";
+  string public constant symbol = "KNC";
 
-  function Token7(address _to, uint256 _amount) {
+  function KNC(address _to, uint256 _amount) {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
   }

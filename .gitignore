@@ -1,6 +1,7 @@
 #configuration
 .env
 coverage.json
+./chain/*
 
 # Contracts builds
 build/contracts/*.json

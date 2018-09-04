@@ -10,7 +10,7 @@ import '../utils/Owned.sol';
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract Token2 is Owned {
+contract MITH is Owned {
 
   using SafeMath for uint256;
 
@@ -24,9 +24,9 @@ contract Token2 is Owned {
 
   uint256 totalSupply_;
   bool public mintingFinished = false;
-  string public constant symbol = "TOK2";
+  string public constant symbol = "MITH";
 
-  function Token2(address _to, uint256 _amount) {
+  function MITH(address _to, uint256 _amount) {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
   }
