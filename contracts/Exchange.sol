@@ -39,10 +39,15 @@ contract Exchange is Owned {
         uint paidFeeMake,
         uint paidFeeTake,
         bytes32 orderHash,
+        bytes32 tradeHash,
         bytes32 indexed tokenPairHash // keccak256(makerToken, takerToken), allows subscribing to a token pair
     );
 
-    event LogError(uint8 errorId, bytes32 orderHash);
+    event LogError(
+        uint8 errorId,
+        bytes32 orderHash,
+        bytes32 tradeHash
+    );
 
     event LogCancelOrder(
         bytes32 orderHash,
@@ -171,32 +176,32 @@ contract Exchange is Owned {
         bytes32 tradeHash = getTradeHash(trade);
 
         if (!isValidSignature(order.maker, orderHash, v[0], rs[0], rs[1])) {
-            emit LogError(uint8(Errors.MAKER_SIGNATURE_INVALID), orderHash);
+            emit LogError(uint8(Errors.MAKER_SIGNATURE_INVALID), orderHash, tradeHash);
             return false;
         }
 
         if (!isValidSignature(trade.taker, tradeHash, v[1], rs[2], rs[3])) {
-            emit LogError(uint8(Errors.TAKER_SIGNATURE_INVALID), tradeHash);
+            emit LogError(uint8(Errors.TAKER_SIGNATURE_INVALID), orderHash, tradeHash);
             return false;
         }
 
         if (order.expires < block.number) {
-            emit LogError(uint8(Errors.ORDER_EXPIRED), orderHash);
+            emit LogError(uint8(Errors.ORDER_EXPIRED), orderHash, tradeHash);
             return false;
         }
 
         if (traded[tradeHash]) {
-            emit LogError(uint8(Errors.TRADE_ALREADY_COMPLETED_OR_CANCELLED), tradeHash);
+            emit LogError(uint8(Errors.TRADE_ALREADY_COMPLETED_OR_CANCELLED), orderHash, tradeHash);
             return false;
         }
 
         if (filled[orderHash].add(trade.amount) > order.amountBuy) {
-            emit LogError(uint8(Errors.TRADE_AMOUNT_TOO_BIG), orderHash);
+            emit LogError(uint8(Errors.TRADE_AMOUNT_TOO_BIG), orderHash, tradeHash);
             return false;
         }
 
         if (isRoundingError(trade.amount, order.amountBuy, order.amountSell)) {
-            emit LogError(uint8(Errors.ROUNDING_ERROR_TOO_LARGE), orderHash);
+            emit LogError(uint8(Errors.ROUNDING_ERROR_TOO_LARGE), orderHash, tradeHash);
             return false;
         }
 
@@ -228,6 +233,7 @@ contract Exchange is Owned {
             paidFeeMake,
             paidFeeTake,
             orderHash,
+            tradeHash,
             keccak256(abi.encodePacked(order.tokenSell, order.tokenBuy)));
         return true;
     }
@@ -262,7 +268,7 @@ contract Exchange is Owned {
         bytes32 orderHash = getOrderHash(order);
 
         if (!isValidSignature(msg.sender, orderHash, v, r, s)) {
-            emit LogError(uint8(Errors.SIGNATURE_INVALID), orderHash);
+            emit LogError(uint8(Errors.SIGNATURE_INVALID), orderHash, "");
             return false;
         }
         filled[orderHash] = order.amountBuy;
@@ -311,7 +317,7 @@ contract Exchange is Owned {
         bytes32 tradeHash = getTradeHash(trade);
 
         if (!isValidSignature(msg.sender, tradeHash, v, r, s)) {
-            emit LogError(uint8(Errors.SIGNATURE_INVALID), tradeHash);
+            emit LogError(uint8(Errors.SIGNATURE_INVALID), "", tradeHash);
             return false;
         }
         traded[tradeHash] = true;
