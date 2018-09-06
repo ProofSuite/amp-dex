@@ -37,7 +37,7 @@ module.exports = function (deployer) {
             exchange = await Exchange.deployed();
 
             for(let account of accounts) {
-              approvals.push(weth.approve(exchange.address, 1e18, { from: account }))
+              approvals.push(weth.approve(exchange.address, 500000e18, { from: account }))
             }
 
             await Promise.all(approvals)
