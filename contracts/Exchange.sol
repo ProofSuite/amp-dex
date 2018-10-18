@@ -29,6 +29,16 @@ contract Exchange is Owned {
     event LogFeeAccountUpdate(address oldFeeAccount, address newFeeAccount);
     event LogOperatorUpdate(address operator, bool isOperator);
 
+    event LogBatchTrades(
+      address indexed taker,
+      address tokenSell,
+      address tokenBuy,
+      bytes32[] orderHashes,
+      bytes32[] tradeHashes,
+      uint256[] filledAmounts,
+      bytes32 indexed tokenPairHash
+    );
+
     event LogTrade(
         address indexed maker,
         address indexed taker,
@@ -127,6 +137,44 @@ contract Exchange is Owned {
         return true;
     }
 
+    function executeBatchTrades(
+      uint256[8][] orderValues,
+      address[4][] orderAddresses,
+      uint8[2][] memory v,
+      bytes32[4][] memory rs
+    ) public onlyOperator returns (bool)
+    {
+      bytes32[] memory orderHashes = new bytes32[](orderAddresses.length - 1);
+      bytes32[] memory tradeHashes = new bytes32[](orderAddresses.length - 1);
+      uint256[] memory filledAmounts = new uint256[](orderAddresses.length - 1);
+
+      for (uint i = 0; i < orderAddresses.length; i++) {
+        var (orderHash, tradeHash, filledAmount, error) = executeTrade(
+          orderValues[i],
+          orderAddresses[i],
+          v[i],
+          rs[i]
+        );
+
+        if (filledAmount == 0) {
+          return false;
+        }
+
+        orderHashes[i] = orderHash;
+        tradeHashes[i] = tradeHash;
+        filledAmounts[i] = filledAmount;
+      }
+
+      emit LogBatchTrades(
+        orderAddresses[0][2], //maker
+        orderAddresses[0][1], //tokenSell
+        orderAddresses[0][0], //tokenBuy
+        orderHashes,
+        tradeHashes,
+        filledAmounts,
+        keccak256(abi.encodePacked(orderAddresses[0][1], orderAddresses[0][2]))
+      );
+    }
 
     /*
     * Core exchange functions
@@ -150,7 +198,7 @@ contract Exchange is Owned {
         address[4] orderAddresses,
         uint8[2] memory v,
         bytes32[4] memory rs
-    ) public onlyOperator returns (bool)
+    ) public onlyOperator returns (bytes32, bytes32, uint256)
     {
         Order memory order = Order({
             amountBuy : orderValues[0],
@@ -162,7 +210,7 @@ contract Exchange is Owned {
             tokenBuy : orderAddresses[0],
             tokenSell : orderAddresses[1],
             maker : orderAddresses[2]
-            });
+        });
 
         bytes32 orderHash = getOrderHash(order);
 
@@ -171,38 +219,38 @@ contract Exchange is Owned {
             amount : orderValues[6],
             tradeNonce : orderValues[7],
             taker : orderAddresses[3]
-            });
+        });
 
         bytes32 tradeHash = getTradeHash(trade);
 
         if (!isValidSignature(order.maker, orderHash, v[0], rs[0], rs[1])) {
             emit LogError(uint8(Errors.MAKER_SIGNATURE_INVALID), orderHash, tradeHash);
-            return false;
+            return (orderHash, tradeHash, 0);
         }
 
         if (!isValidSignature(trade.taker, tradeHash, v[1], rs[2], rs[3])) {
             emit LogError(uint8(Errors.TAKER_SIGNATURE_INVALID), orderHash, tradeHash);
-            return false;
+            return (orderHash, tradeHash, 0);
         }
 
         if (order.expires < block.number) {
             emit LogError(uint8(Errors.ORDER_EXPIRED), orderHash, tradeHash);
-            return false;
+            return (orderHash, tradeHash, 0);
         }
 
         if (traded[tradeHash]) {
             emit LogError(uint8(Errors.TRADE_ALREADY_COMPLETED_OR_CANCELLED), orderHash, tradeHash);
-            return false;
+            return (orderHash, tradeHash, 0);
         }
 
         if (filled[orderHash].add(trade.amount) > order.amountBuy) {
             emit LogError(uint8(Errors.TRADE_AMOUNT_TOO_BIG), orderHash, tradeHash);
-            return false;
+            return (orderHash, tradeHash, 0);
         }
 
         if (isRoundingError(trade.amount, order.amountBuy, order.amountSell)) {
             emit LogError(uint8(Errors.ROUNDING_ERROR_TOO_LARGE), orderHash, tradeHash);
-            return false;
+            return (orderHash, tradeHash, 0);
         }
 
         traded[tradeHash] = true;
@@ -223,19 +271,42 @@ contract Exchange is Owned {
             require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
         }
 
-        emit LogTrade(
-            order.maker,
-            trade.taker,
-            order.tokenSell,
-            order.tokenBuy,
-            filledAmountSell,
-            trade.amount,
-            paidFeeMake,
-            paidFeeTake,
-            orderHash,
-            tradeHash,
-            keccak256(abi.encodePacked(order.tokenSell, order.tokenBuy)));
-        return true;
+        // emit LogTrade(
+        //     order.maker,
+        //     trade.taker,
+        //     order.tokenSell,
+        //     order.tokenBuy,
+        //     filledAmountSell,
+        //     trade.amount,
+        //     paidFeeMake,
+        //     paidFeeTake,
+        //     orderHash,
+        //     tradeHash,
+        //     keccak256(abi.encodePacked(order.tokenSell, order.tokenBuy)));
+
+        return (orderHash, tradeHash, trade.amount);
+    }
+
+
+
+
+    function batchCancelOrders(
+      uint256[6][] orderValues,
+      address[3][] orderAddresses,
+      uint8[] v,
+      bytes32[] r,
+      bytes32[] s
+    ) public
+    {
+      for (uint i = 0; i < orderAddresses.length; i++) {
+        cancelOrder(
+          orderValues[i],
+          orderAddresses[i],
+          v[i],
+          r[i],
+          s[i]
+        );
+      }
     }
 
     /// @dev Cancels the input order.
@@ -285,6 +356,32 @@ contract Exchange is Owned {
             keccak256(abi.encodePacked(order.tokenSell, order.tokenBuy)));
         return true;
     }
+
+
+    function batchCancelTrades(
+      bytes32[] orderHash,
+      uint256[] amount,
+      uint256[] tradeNonce,
+      address[] taker,
+      uint8[] v,
+      bytes32[] r,
+      bytes32[] s
+    ) public
+    {
+      for (uint i = 0; i < orderHash.length; i++) {
+        cancelTrade(
+          orderHash[i],
+          amount[i],
+          tradeNonce[i],
+          taker[i],
+          v[i],
+          r[i],
+          s[i]
+        );
+      }
+    }
+
+
 
 
     /// @dev Cancels the input trade.

@@ -24,12 +24,15 @@ const KNC = artifacts.require('./contracts/tokens/KNC.sol');
 const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 
-const accounts = web3.eth.accounts;
-let weth;
-let exchange;
 
 
-module.exports = function (deployer) {
+
+
+module.exports = function (deployer, accounts) {
+  const accounts = web3.eth.accounts;
+  let weth;
+  let exchange;
+
     WETH.deployed()
         .then(async (_weth) => {
             let approvals = []

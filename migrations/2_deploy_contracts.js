@@ -25,16 +25,16 @@ const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 const DAI = artifacts.require('./contracts/tokens/DAI.sol');
 
-const accounts = web3.eth.accounts;
-const admin = accounts[0];
-let weth;
-let exchange;
-let token1;
-let token2;
-let token3;
+module.exports = function (deployer, network, accounts) {
+
+    let admin = accounts[0]
+    let weth;
+    let exchange;
+    let token1;
+    let token2;
+    let token3;
 
 
-module.exports = function (deployer) {
     deployer.deploy(WETH).then(async (_weth) => {
         weth = _weth;
         exchange = await deployer.deploy(Exchange, weth.address, admin);

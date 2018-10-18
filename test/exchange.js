@@ -1680,6 +1680,71 @@ contract('Exchange', (accounts) => {
                 currentBalances.should.be.deep.equals(initialBalances);
             })
         })
+
+        describe('Multiple trades', async () => {
+          // beforeEach(async () => {
+          //   weth = await WETH.new();
+          //   exchange = await Exchange.new(weth.address, feeAccount);
+          //   token1 = await BNB.new(trader1, 2000)
+          //   token2 = await OMG.new(trader2, 1000)
+          //   token2 = await OMG.new(trader3, 1000)
+          // })
+
+          // it('should execute batch trades', () => {
+          //   let initialBlockNumber = await web3.eth.getBlockNumber();
+
+          //   let order = {
+          //       amountBuy: 2000,
+          //       amountSell: 2000,
+          //       expires: initialBlockNumber + 10,
+          //       nonce: 1,
+          //       feeMake: 1e17,
+          //       feeTake: 1e17,
+          //       tokenBuy: token2.address,
+          //       tokenSell: token1.address,
+          //       maker: trader1
+          //   };
+
+          //   let trade1 = {
+          //       amount: 1000,
+          //       tradeNonce: 1,
+          //       taker: trader2
+          //   };
+
+          //   let trade2 = {
+          //       amount: 1000,
+          //       tradeNonce: 1,
+          //       taker: trader3,
+          //   }
+
+          //   let orderHash = getOrderHash(exchange, order);
+          //   let trade1Hash = getTradeHash(orderHash, trade1);
+          //   let trade2Hash = getTradeHash(orderHash, )
+
+          //   let {message: message1, messageHash: messageHash1, r: r1, s: s1, v: v1} = web3.eth.accounts.sign(orderHash, privateKeyOfTrader1);
+          //   let {message: message2, messageHash: messageHash2, r: r2, s: s2, v: v2} = web3.eth.accounts.sign(tradeHash, privateKeyOfTrader2);
+
+          //   let orderValues = getMatchOrderValues(order, trade);
+          //   let orderAddresses = getMatchOrderAddresses(order, trade);
+
+          //   await exchange.executeTrade(orderValues, orderAddresses, [v1, v2], [r1, s1, r2, s2]);
+
+          //   let orderFill = await exchange.filled.call(orderHash);
+          //   orderFill.should.be.bignumber.equal(trade.amount);
+
+          //   let tradeCompleted = await exchange.traded.call(tradeHash);
+          //   tradeCompleted.should.be.equal(true);
+
+          //   let balances = await getBalances(trader1, trader2, feeAccount, token1, token2, weth);
+          //   balances.trader1BalanceOfToken1.should.be.bignumber.equal(500);
+          //   balances.trader1BalanceOfToken2.should.be.bignumber.equal(500);
+          //   balances.trader1BalanceOfWETH.should.be.bignumber.equal(9.5e17);
+          //   balances.trader2BalanceOfToken1.should.be.bignumber.equal(500);
+          //   balances.trader2BalanceOfToken2.should.be.bignumber.equal(500);
+          //   balances.trader2BalanceOfWETH.should.be.bignumber.equal(9.5e17);
+          //   balances.feeAccountBalanceOfWETH.should.be.bignumber.equal(1e17)
+          // })
+        }
     });
 
     describe('Rounding error', () => {

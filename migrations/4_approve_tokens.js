@@ -25,13 +25,12 @@ const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 const DAI = artifacts.require('./contracts/tokens/DAI.sol');
 
-const accounts = web3.eth.accounts;
 let weth;
 let exchange;
 let tokens = []
 
 
-module.exports = function (deployer) {
+module.exports = function (deployer, network, accounts) {
     WETH.deployed()
         .then(async (_weth) => {
             weth = _weth;
@@ -64,11 +63,14 @@ module.exports = function (deployer) {
 
             let tokenApprovals = []
 
-            for(let token of tokens) {
-              for(let account of accounts) {
-                tokenApprovals.push(token.approve(exchange.address, 1000000e18, { from: account }))
+            if (network !== 'rinkeby') {
+              for(let token of tokens) {
+                for(let account of accounts) {
+                  tokenApprovals.push(token.approve(exchange.address, 1000000e18, { from: account }))
+                }
               }
             }
+
 
             try {
               await Promise.all(tokenApprovals)

@@ -1,3 +1,5 @@
+const config = require('../config')
+
 const Exchange = artifacts.require('./Exchange.sol');
 const WETH = artifacts.require('./contracts/utils/WETH9.sol');
 const BNB = artifacts.require('./contracts/tokens/BNB.sol');
@@ -25,13 +27,57 @@ const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 const DAI = artifacts.require('./contracts/tokens/DAI.sol');
 
-const accounts = web3.eth.accounts;
-const admin = accounts[0];
-
 let tokens = []
 
+const toTxHash = (value) => {
+  if (typeof value === "string") {
+    // this is probably a tx hash already
+    return value;
+  } else if (typeof value.receipt === "object") {
+    // this is probably a tx object
+    return value.receipt.transactionHash;
+  } else {
+    throw "Unsupported tx type: " + value;
+  }
+}
 
-module.exports = function (deployer) {
+const mineTx = (promiseOrTx, interval) => {
+  return Promise.resolve(promiseOrTx)
+    .then(tx => {
+      const txHash = toTxHash(tx);
+
+      return new Promise((resolve, reject) => {
+        const getReceipt = () => {
+          web3.eth.getTransactionReceipt(txHash, (error, receipt) => {
+            if (error) {
+              reject(error);
+            } else if (receipt) {
+              resolve(receipt);
+            } else {
+              setTimeout(getReceipt, interval || 500);
+            }
+          })
+        }
+
+        getReceipt();
+      })
+    });
+}
+
+
+module.exports = function (deployer, network, accounts) {
+    let admin, addresses
+
+    if (network === 'rinkeby') {
+      admin = accounts[0]
+      addresses = config.accounts.rinkeby
+    } else {
+      admin = accounts[0]
+      addresses = accounts
+    }
+
+    console.log(addresses)
+
     BNB.deployed()
         .then(async (_token1) => {
             tokens[0] = _token1;
@@ -59,14 +105,19 @@ module.exports = function (deployer) {
             tokens[22] = await PRFT.deployed();
             tokens[23] = await DAI.deployed();
 
-            let tokenTransfers = []
+            let transfers = []
 
-            for(let token of tokens) {
-              for(let account of accounts) {
-                tokenTransfers.push(token.transfer(account, 1000000e18, { from: admin }))
+            try {
+              for (let i = 0; i < tokens.length -1 ; i++) {
+                for (let j = 0; j < addresses.length - 1; j++) {
+                  transfers.push(tokens[i].transfer(addresses[j], 1000000e18, { from: admin }))
+                }
               }
+
+              await Promise.all(transfers)
+            } catch (e) {
+              console.log(e.message)
             }
 
-            await Promise.all(tokenTransfers)
         })
 }
