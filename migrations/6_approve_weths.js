@@ -29,7 +29,6 @@ const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 
 
 module.exports = function (deployer, accounts) {
-  const accounts = web3.eth.accounts;
   let weth;
   let exchange;
 

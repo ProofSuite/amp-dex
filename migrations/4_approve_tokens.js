@@ -71,7 +71,6 @@ module.exports = function (deployer, network, accounts) {
               }
             }
 
-
             try {
               await Promise.all(tokenApprovals)
             } catch (e) {

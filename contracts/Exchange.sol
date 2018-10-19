@@ -144,12 +144,12 @@ contract Exchange is Owned {
       bytes32[4][] memory rs
     ) public onlyOperator returns (bool)
     {
-      bytes32[] memory orderHashes = new bytes32[](orderAddresses.length - 1);
-      bytes32[] memory tradeHashes = new bytes32[](orderAddresses.length - 1);
-      uint256[] memory filledAmounts = new uint256[](orderAddresses.length - 1);
+      bytes32[] memory orderHashes = new bytes32[](orderAddresses.length);
+      bytes32[] memory tradeHashes = new bytes32[](orderAddresses.length);
+      uint256[] memory filledAmounts = new uint256[](orderAddresses.length);
 
       for (uint i = 0; i < orderAddresses.length; i++) {
-        var (orderHash, tradeHash, filledAmount, error) = executeTrade(
+        var (orderHash, tradeHash, filledAmount) = executeTrade(
           orderValues[i],
           orderAddresses[i],
           v[i],
