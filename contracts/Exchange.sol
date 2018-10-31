@@ -262,14 +262,20 @@ contract Exchange is Owned {
         require(ERC20(order.tokenBuy).transferFrom(trade.taker, order.maker, trade.amount));
 
         if (order.feeMake > 0) {
-            uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
-            require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));
+          require(ERC20(wethToken).transferFrom(order.maker, feeAccount, feeMake))
         }
 
         if (order.feeTake > 0) {
-            uint paidFeeTake = getPartialAmount(trade.amount, order.amountBuy, order.feeTake);
-            require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
+          require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, feeTake))
         }
+
+        // uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
+            // require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));
+        // }
+        // if (order.feeTake > 0) {
+        //     uint paidFeeTake = getPartialAmount(trade.amount, order.amountBuy, order.feeTake);
+        //     require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
+        // }
 
         // emit LogTrade(
         //     order.maker,

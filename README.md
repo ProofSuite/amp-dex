@@ -1,10 +1,11 @@
 
 # Proof DEX
-Official Repository for the Proof Decentralized Exchange
+Official Repository for the Proof decentralized exchange smart contracts
 
 <!-- [![Build Status](https://travis-ci.org/ProofSuite/ProofCryptoFiat.svg?branch=develop)](https://travis-ci.org/ProofSuite/ProofCryptoFiat) -->
 <!-- [![Code Coverage](https://codecov.io/gh/ProofSuite/ProofCryptoFiat/branch/develop/graph/badge.svg)](https://codecov.io/gh/ProofSuite/ProofCryptoFiat) -->
 
+[![Chat on discord](https://img.shields.io/discord/308323056592486420.svg?logo=discord)](https://discord.gg/gvxeqMf)
 [![GitHub Issues](https://img.shields.io/github/issues/Proofsuite/amp-dex.svg)](https://github.com/Proofsuite/amp-dex/issues)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
