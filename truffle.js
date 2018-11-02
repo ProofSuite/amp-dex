@@ -33,7 +33,7 @@ module.exports = {
       port: 8545,
       network_id: '1000',
       gas: config.constants.MAX_GAS,
-      gasPrice: config.constants.DEFAULT_GAS_PRICE,
+      gasPrice: 1,
       from: '0xe8e84ee367bc63ddb38d3d01bccef106c194dc47'  // testprc main account here
     },
     development_geth: {
