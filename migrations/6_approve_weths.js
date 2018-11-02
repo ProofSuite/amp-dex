@@ -28,9 +28,11 @@ const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 
 
 
-module.exports = function (deployer, accounts) {
+module.exports = function (deployer, network, accounts) {
   let weth;
   let exchange;
+
+  if (network === 'development') return
 
     WETH.deployed()
         .then(async (_weth) => {

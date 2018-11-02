@@ -3,46 +3,39 @@ import {soliditySha3 as keccak256} from 'web3-utils'
 export const getOrderHash = (exchange, order) => {
     return keccak256(
         exchange.address,
-        order.maker,
-        order.tokenSell,
-        order.tokenBuy,
-        order.amountSell,
-        order.amountBuy,
+        order.userAddress,
+        order.baseToken,
+        order.quoteToken,
+        order.amount,
+        order.pricepoint,
+        order.side,
+        order.salt,
         order.feeMake,
-        order.feeTake,
-        order.expires,
-        order.nonce
+        order.feeTake
     )
 };
 
-export const getTradeHash = (orderHash, trade) => {
-    return keccak256(
-        orderHash,
-        trade.taker,
-        trade.amount,
-        trade.tradeNonce
-    )
-};
-
-export const getMatchOrderValues = (order, trade) => {
+export const getMatchOrderValues = (makerOrder, takerOrder) => {
     return [
-        order.amountBuy,
-        order.amountSell,
-        order.expires,
-        order.nonce,
-        order.feeMake,
-        order.feeTake,
-        trade.amount,
-        trade.tradeNonce
+        makerOrder.amount,
+        makerOrder.pricepoint,
+        makerOrder.side,
+        makerOrder.salt,
+        takerOrder.amount,
+        takerOrder.pricepoint,
+        takerOrder.side,
+        takerOrder.salt,
+        makerOrder.feeTake, //supposed to be the same for both orders
+        makerOrder.feeMake //supposed to be the same for both orders
     ]
 };
 
-export const getMatchOrderAddresses = (order, trade) => {
+export const getMatchOrderAddresses = (makerOrder, takerOrder) => {
     return [
-        order.tokenBuy,
-        order.tokenSell,
-        order.maker,
-        trade.taker
+        makerOrder.userAddress,
+        takerOrder.userAddress,
+        makerOrder.baseToken, //supposed to be the same for both orders
+        makerOrder.quoteToken  //supposed to be the same for both orders
     ]
 };
 

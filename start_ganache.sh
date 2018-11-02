@@ -27,7 +27,5 @@ ganache-cli \
 --unlock 7 \
 --unlock 8 \
 --unlock 9 \
--d \
---db="./chain"  \
 -i 1000 \
---debug
+# --debug
