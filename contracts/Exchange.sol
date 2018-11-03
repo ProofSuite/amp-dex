@@ -261,13 +261,13 @@ contract Exchange is Owned {
         require(ERC20(order.tokenSell).transferFrom(order.maker, trade.taker, filledAmountSell));
         require(ERC20(order.tokenBuy).transferFrom(trade.taker, order.maker, trade.amount));
 
-        if (order.feeMake > 0) {
-          require(ERC20(wethToken).transferFrom(order.maker, feeAccount, feeMake))
-        }
+        // if (order.feeMake > 0) {
+        //   require(ERC20(wethToken).transferFrom(order.maker, feeAccount, feeMake));
+        // }
 
-        if (order.feeTake > 0) {
-          require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, feeTake))
-        }
+        // if (order.feeTake > 0) {
+        //   require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, feeTake));
+        // }
 
         // uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
             // require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));

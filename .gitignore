@@ -3,9 +3,6 @@
 coverage.json
 ./chain/*
 
-# Contracts builds
-build/contracts/*.json
-
 # Logs
 logs
 *.log
@@ -67,9 +64,6 @@ typings/
 
 # next.js build output
 .next
-
-# truffle
-build/contracts/*.json
 
 #vscode
 .vscode/
