@@ -57,8 +57,8 @@ contract Exchange is Owned {
 
     event LogError(
         uint8 errorId,
-        bytes32 orderHash,
-        bytes32 tradeHash
+        bytes32 makerOrderHash,
+        bytes32 takerOrderHash
     );
 
     event LogCancelOrder(
@@ -421,19 +421,20 @@ contract Exchange is Owned {
           require(ERC20(wethToken).transferFrom(takerOrder.userAddress, feeAccount, makerOrder.feeTake));
         }
 
-        // uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
-        //     require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));
-        // }
-        // if (order.feeTake > 0) {
-        //     uint paidFeeTake = getPartialAmount(trade.amount, order.amountBuy, order.feeTake);
-        //     require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
-        // }
-
       return (makerOrderHash, takerOrderHash, true);
     }
 
 
 
+
+
+    // uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
+    //     require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));
+    // }
+    // if (order.feeTake > 0) {
+    //     uint paidFeeTake = getPartialAmount(trade.amount, order.amountBuy, order.feeTake);
+    //     require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
+    // }
 
     // function batchCancelOrders(
     //   uint256[6][] orderValues,

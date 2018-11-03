@@ -3,9 +3,6 @@
 coverage.json
 ./chain/*
 
-# Contracts builds
-build/contracts/*.json
-
 # Logs
 logs
 *.log
