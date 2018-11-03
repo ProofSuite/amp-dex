@@ -42,9 +42,7 @@ export const getMatchOrderAddresses = (makerOrder, takerOrder) => {
 
 export const getCancelOrderValues = (order) => {
     return [
-        order.amountBuy,
-        order.amountSell,
-        order.expires,
+        order.amount,
         order.nonce,
         order.feeMake,
         order.feeTake

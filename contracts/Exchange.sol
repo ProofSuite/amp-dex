@@ -67,7 +67,6 @@ contract Exchange is Owned {
         uint256 amountBuy,
         address tokenSell,
         uint256 amountSell,
-        uint256 expires,
         uint256 nonce,
         address indexed maker,
         bytes32 indexed tokenPairHash // keccak256(makerToken, takerToken), allows subscribing to a token pair
