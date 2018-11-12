@@ -26,9 +26,6 @@ contract Exchange is Owned {
     mapping(address => bool) public operators;
     mapping(bytes32 => uint) public filled;       // Mappings of orderHash => amount of amountBuy filled.
     mapping(bytes32 => bool) public traded;       // Mappings of tradeHash => bool value representing whether the trade is completed(true) or incomplete(false).
-
-    mapping(address => bool) public quoteTokens;
-    mapping(address => bool) public baseTokens;
     mapping(bytes32 => Pair) public pairs;
 
     event LogWethTokenUpdate(address oldWethToken, address newWethToken);
@@ -63,20 +60,12 @@ contract Exchange is Owned {
 
     event LogCancelOrder(
         bytes32 orderHash,
-        address tokenBuy,
-        uint256 amountBuy,
-        address tokenSell,
-        uint256 amountSell,
-        uint256 nonce,
-        address indexed maker,
-        bytes32 indexed tokenPairHash // keccak256(makerToken, takerToken), allows subscribing to a token pair
-    );
-
-    event LogCancelTrade(
-        bytes32 orderHash,
+        address userAddress,
+        address baseToken,
+        address quoteToken,
         uint256 amount,
-        uint256 tradeNonce,
-        address indexed taker
+        uint256 pricepoint,
+        uint256 side
     );
 
     struct Pair {
@@ -124,24 +113,6 @@ contract Exchange is Owned {
         quoteToken: _quoteToken,
         pricepointMultiplier: _pricepointMultiplier
       });
-    }
-
-    function registerBaseToken(address _token) public onlyOwner returns (bool) {
-      baseTokens[_token] = true;
-      return true;
-    }
-
-    function registerQuoteToken(address _token) public onlyOwner returns (bool) {
-      quoteTokens[_token] = true;
-      return true;
-    }
-
-    function deleteBaseToken(address _token) public onlyOwner returns (bool) {
-      baseTokens[_token] = false;
-    }
-
-    function deleteQuoteToken(address _token) public onlyOwner returns (bool) {
-      quoteTokens[_token] = false;
     }
 
     /// @dev Sets the address of WETH token.
@@ -210,6 +181,12 @@ contract Exchange is Owned {
         }
       }
 
+      payTakerFees(
+        orderValues[0], //takerOrder.amount
+        orderAddresses[0], //takerOrder.feeTake
+        amounts
+      );
+
       emitLog(
         orderAddresses[0],
         makerOrderHashes,
@@ -248,35 +225,16 @@ contract Exchange is Owned {
         pricepointMultiplier
       );
 
-      // if (traded) {
-      //   makerOrderHashes[0] = makerOrderHash;
-      //   takerOrderHashes[0] = takerOrderHash;
-      // }
-
-      // emitLog(
-      //   orderAddresses,
-      //   makerOrderHashes,
-      //   takerOrderHashes
-      // );
-    }
-
-    function emitLog(
-      address[4] orderAddresses,
-      bytes32[] makerOrderHashes,
-      bytes32[] takerOrderHashes
-    ) {
-
-      emit LogBatchTrades(
-        makerOrderHashes,
-        takerOrderHashes,
-        keccak256(abi.encodePacked(orderAddresses[1], orderAddresses[2]))
+      paySingleTradeTakerFees(
+        orderValues, //takerOrder.amount
+        orderAddresses, //takerOrder.userAddress
+        amount
       );
     }
 
-
     function validatePair(
       address[4] orderAddresses
-    ) public returns (uint256) {
+    ) internal returns (uint256) {
       bytes32 pairID = getPairHash(orderAddresses[2], orderAddresses[3]);
       Pair memory pair = pairs[pairID];
 
@@ -403,170 +361,127 @@ contract Exchange is Owned {
 
         uint256 baseTokenAmount = amount;
         uint256 quoteTokenAmount = (amount.mul(makerOrder.pricepoint)).div(pricepointMultiplier);
+        uint256 fee = getPartialAmount(amount, makerOrder.amount, makerOrder.feeMake);
 
-        if (makerOrder.side == 0) { //if maker order is a buy
+        if (makerOrder.side == 0) {
           require(ERC20(makerOrder.quoteToken).transferFrom(makerOrder.userAddress, takerOrder.userAddress, quoteTokenAmount));
+          require(ERC20(makerOrder.quoteToken).transferFrom(makerOrder.userAddress, feeAccount, fee));
           require(ERC20(takerOrder.baseToken).transferFrom(takerOrder.userAddress, makerOrder.userAddress, baseTokenAmount));
         } else {
           require(ERC20(makerOrder.baseToken).transferFrom(makerOrder.userAddress, takerOrder.userAddress, baseTokenAmount));
-          require(ERC20(takerOrder.quoteToken).transferFrom(takerOrder.userAddress, makerOrder.userAddress, quoteTokenAmount));
-        }
-
-        if (makerOrder.feeMake > 0) {
-          require(ERC20(wethToken).transferFrom(makerOrder.userAddress, feeAccount, makerOrder.feeMake));
-        }
-
-        if (makerOrder.feeTake > 0) {
-          require(ERC20(wethToken).transferFrom(takerOrder.userAddress, feeAccount, makerOrder.feeTake));
+          require(ERC20(takerOrder.quoteToken).transferFrom(takerOrder.userAddress, feeAccount, fee));
+          require(ERC20(takerOrder.quoteToken).transferFrom(takerOrder.userAddress, makerOrder.userAddress, quoteTokenAmount - fee));
         }
 
       return (makerOrderHash, takerOrderHash, true);
     }
 
 
+    function paySingleTradeTakerFees(
+      uint256[10] orderValues,
+      address[4] orderAddresses,
+      uint256 amount
+    ) internal returns (bool)
+    {
+      uint256 takerOrderAmount = orderValues[4];
+      uint256 feeTake = orderValues[8];
+      address userAddress = orderAddresses[1];
+      address quoteToken = orderAddresses[3];
 
 
-
-    // uint paidFeeMake = getPartialAmount(trade.amount, order.amountBuy, order.feeMake);
-    //     require(ERC20(wethToken).transferFrom(order.maker, feeAccount, paidFeeMake));
-    // }
-    // if (order.feeTake > 0) {
-    //     uint paidFeeTake = getPartialAmount(trade.amount, order.amountBuy, order.feeTake);
-    //     require(ERC20(wethToken).transferFrom(trade.taker, feeAccount, paidFeeTake));
-    // }
-
-    // function batchCancelOrders(
-    //   uint256[6][] orderValues,
-    //   address[3][] orderAddresses,
-    //   uint8[] v,
-    //   bytes32[] r,
-    //   bytes32[] s
-    // ) public
-    // {
-    //   for (uint i = 0; i < orderAddresses.length; i++) {
-    //     cancelOrder(
-    //       orderValues[i],
-    //       orderAddresses[i],
-    //       v[i],
-    //       r[i],
-    //       s[i]
-    //     );
-    //   }
-    // }
-
-    // /// @dev Cancels the input order.
-    // /// @param orderValues Array of order's amountBuy, amountSell, expires, nonce, feeMake & feeTake values.
-    // /// @param orderAddresses Array of order's tokenBuy, tokenSell & maker addresses.
-    // /// @param v ECDSA signature parameter v.
-    // /// @param r ECDSA signature parameters r.
-    // /// @param s ECDSA signature parameters s.
-    // /// @return Success or failure of order cancellation.
-    // function cancelOrder(
-    //     uint256[6] orderValues,
-    //     address[3] orderAddresses,
-    //     uint8 v,
-    //     bytes32 r,
-    //     bytes32 s
-    // ) public returns (bool)
-    // {
-    //     Order memory order = Order({
-    //         amountBuy : orderValues[0],
-    //         amountSell : orderValues[1],
-    //         expires : orderValues[2],
-    //         nonce : orderValues[3],
-    //         feeMake : orderValues[4],
-    //         feeTake : orderValues[5],
-    //         tokenBuy : orderAddresses[0],
-    //         tokenSell : orderAddresses[1],
-    //         maker : orderAddresses[2]
-    //         });
-
-    //     bytes32 orderHash = getOrderHash(order);
-
-    //     if (!isValidSignature(msg.sender, orderHash, v, r, s)) {
-    //         emit LogError(uint8(Errors.SIGNATURE_INVALID), orderHash, "");
-    //         return false;
-    //     }
-    //     filled[orderHash] = order.amountBuy;
-
-    //     emit LogCancelOrder(
-    //         orderHash,
-    //         order.tokenBuy,
-    //         order.amountBuy,
-    //         order.tokenSell,
-    //         order.amountSell,
-    //         order.expires,
-    //         order.nonce,
-    //         order.maker,
-    //         keccak256(abi.encodePacked(order.tokenSell, order.tokenBuy)));
-    //     return true;
-    // }
+      uint256 fee = getPartialAmount(amount, takerOrderAmount, feeTake);
+      require(ERC20(quoteToken).transferFrom(userAddress, feeAccount, fee));
+    }
 
 
-    // function batchCancelTrades(
-    //   bytes32[] orderHash,
-    //   uint256[] amount,
-    //   uint256[] tradeNonce,
-    //   address[] taker,
-    //   uint8[] v,
-    //   bytes32[] r,
-    //   bytes32[] s
-    // ) public
-    // {
-    //   for (uint i = 0; i < orderHash.length; i++) {
-    //     cancelTrade(
-    //       orderHash[i],
-    //       amount[i],
-    //       tradeNonce[i],
-    //       taker[i],
-    //       v[i],
-    //       r[i],
-    //       s[i]
-    //     );
-    //   }
-    // }
+    function payTakerFees(
+      uint256[10] orderValues,
+      address[4] orderAddresses,
+      uint256[] amounts
+    ) internal returns (bool)
+    {
+      uint256 takerOrderAmount = orderValues[4];
+      uint256 feeTake = orderValues[8];
+      address userAddress = orderAddresses[1];
+      address quoteToken = orderAddresses[3];
+
+      uint256 totalAmount;
+      for (uint i = 0; i < amounts.length; i++) {
+        totalAmount = totalAmount + amounts[i];
+      }
+
+      uint256 fee = getPartialAmount(totalAmount, takerOrderAmount, feeTake);
+      require(ERC20(quoteToken).transferFrom(userAddress, feeAccount, fee));
+    }
 
 
+    function batchCancelOrders(
+      uint256[6][] orderValues,
+      address[3][] orderAddresses,
+      uint8[] v,
+      bytes32[] r,
+      bytes32[] s
+    ) public
+    {
+      for (uint i = 0; i < orderAddresses.length; i++) {
+        cancelOrder(
+          orderValues[i],
+          orderAddresses[i],
+          v[i],
+          r[i],
+          s[i]
+        );
+      }
+    }
 
+    /// @dev Cancels the input order.
+    /// @param orderValues Array of order's amountBuy, amountSell, expires, nonce, feeMake & feeTake values.
+    /// @param orderAddresses Array of order's tokenBuy, tokenSell & maker addresses.
+    /// @param v ECDSA signature parameter v.
+    /// @param r ECDSA signature parameters r.
+    /// @param s ECDSA signature parameters s.
+    /// @return Success or failure of order cancellation.
+    function cancelOrder(
+        uint256[6] orderValues,
+        address[3] orderAddresses,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public returns (bool)
+    {
 
-    // /// @dev Cancels the input trade.
-    // /// @param orderHash Keccak-256 hash of order.
-    // /// @param amount Desired amount of takerToken that was to be filled in trade.
-    // /// @param taker Address of the taker.
-    // /// @param tradeNonce Trade nonce that was used in the trade.
-    // /// @param v ECDSA signature parameter v.
-    // /// @param r ECDSA signature parameters r.
-    // /// @param s ECDSA signature parameters s.
-    // /// @return Success or failure of trade cancellation.
-    // function cancelTrade(
-    //     bytes32 orderHash,
-    //     uint256 amount,
-    //     uint256 tradeNonce,
-    //     address taker,
-    //     uint8 v,
-    //     bytes32 r,
-    //     bytes32 s)
-    // public
-    // returns (bool)
-    // {
-    //     Trade memory trade = Trade({
-    //         orderHash : orderHash,
-    //         amount : amount,
-    //         tradeNonce : tradeNonce,
-    //         taker : taker
-    //         });
+      Order memory order = Order({
+        userAddress: orderAddresses[0],
+        baseToken: orderAddresses[1],
+        quoteToken: orderAddresses[2],
+        amount: orderValues[0],
+        pricepoint: orderValues[1],
+        side: orderValues[2],
+        salt: orderValues[3],
+        feeTake: orderValues[4],
+        feeMake: orderValues[5]
+      });
 
-    //     bytes32 tradeHash = getTradeHash(trade);
+        bytes32 orderHash = getOrderHash(order);
 
-    //     if (!isValidSignature(msg.sender, tradeHash, v, r, s)) {
-    //         emit LogError(uint8(Errors.SIGNATURE_INVALID), "", tradeHash);
-    //         return false;
-    //     }
-    //     traded[tradeHash] = true;
+        if (!isValidSignature(msg.sender, orderHash, v, r, s)) {
+            emit LogError(uint8(Errors.SIGNATURE_INVALID), orderHash, "");
+            return false;
+        }
 
-    //     emit LogCancelTrade(orderHash, amount, tradeNonce, taker);
-    //     return true;
-    // }
+        filled[orderHash] = order.amount;
+        emit LogCancelOrder(
+            orderHash,
+            order.userAddress,
+            order.baseToken,
+            order.quoteToken,
+            order.amount,
+            order.pricepoint,
+            order.side
+        );
+
+        return true;
+    }
 
     /*
     * Pure public functions
@@ -667,16 +582,17 @@ contract Exchange is Owned {
             ));
     }
 
+    function emitLog(
+      address[4] orderAddresses,
+      bytes32[] makerOrderHashes,
+      bytes32[] takerOrderHashes
+    ) {
 
-    function getTradeHash(bytes32 _makerOrderHash, bytes32 _takerOrderHash)
-    internal
-    pure
-    returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(
-                _makerOrderHash,
-                _takerOrderHash
-            ));
+      emit LogBatchTrades(
+        makerOrderHashes,
+        takerOrderHashes,
+        keccak256(abi.encodePacked(orderAddresses[1], orderAddresses[2]))
+      );
     }
 
 }
