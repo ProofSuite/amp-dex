@@ -63,6 +63,7 @@ module.exports = function (deployer, network, accounts) {
         token21 = await deployer.deploy(KNC, admin, 10000000000e18);
         token22 = await deployer.deploy(LOOM, admin, 10000000000e18);
         token23 = await deployer.deploy(PRFT, admin, 10000000000e18);
+        token23 = await deployer.deploy(TUSD, admin, 10000000000e18);
         token23 = await deployer.deploy(DAI, admin, 10000000000e18);
     })
 };
