@@ -24,6 +24,7 @@ const KNC = artifacts.require('./contracts/tokens/KNC.sol');
 const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 const DAI = artifacts.require('./contracts/tokens/DAI.sol');
+const TUSD = artifacts.require('./contracts/tokens/TUSD.sol')
 
 module.exports = function (deployer, network, accounts) {
 
@@ -65,5 +66,6 @@ module.exports = function (deployer, network, accounts) {
         token23 = await deployer.deploy(PRFT, admin, 10000000000e18);
         token23 = await deployer.deploy(TUSD, admin, 10000000000e18);
         token23 = await deployer.deploy(DAI, admin, 10000000000e18);
+        token24 = await deployer.deploy(TUSD, admin, 10000000000e18);
     })
 };
