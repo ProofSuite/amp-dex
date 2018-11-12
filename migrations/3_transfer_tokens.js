@@ -1,45 +1,127 @@
-const Token1 = artifacts.require('./contracts/tokens/Token1.sol');
-const Token2 = artifacts.require('./contracts/tokens/Token2.sol');
-const Token3 = artifacts.require('./contracts/tokens/Token3.sol');
+const config = require('../config')
 
-const accounts = web3.eth.accounts;
-const admin = accounts[0];
-let token1;
-let token2;
-let token3;
+const Exchange = artifacts.require('./Exchange.sol');
+const WETH = artifacts.require('./contracts/utils/WETH9.sol');
+const BNB = artifacts.require('./contracts/tokens/BNB.sol');
+const OMG = artifacts.require('./contracts/tokens/OMG.sol');
+const ZRX = artifacts.require('./contracts/tokens/ZRX.sol');
+const AE = artifacts.require('./contracts/tokens/AE.sol');
+const TRX = artifacts.require('./contracts/tokens/TRX.sol');
+const MKR = artifacts.require('./contracts/tokens/MKR.sol');
+const BAT = artifacts.require('./contracts/tokens/BAT.sol');
+const REP = artifacts.require('./contracts/tokens/REP.sol');
+const BTM = artifacts.require('./contracts/tokens/BTM.sol');
+const NPXS = artifacts.require('./contracts/tokens/NPXS.sol');
+const WTC = artifacts.require('./contracts/tokens/WTC.sol');
+const KCS = artifacts.require('./contracts/tokens/KCS.sol');
+const GNT = artifacts.require('./contracts/tokens/GNT.sol');
+const PPT = artifacts.require('./contracts/tokens/PPT.sol');
+const SNT = artifacts.require('./contracts/tokens/SNT.sol');
+const DGX = artifacts.require('./contracts/tokens/DGX.sol');
+const MITH = artifacts.require('./contracts/tokens/MITH.sol');
+const AION = artifacts.require('./contracts/tokens/AION.sol');
+const LRC = artifacts.require('./contracts/tokens/LRC.sol');
+const FUN = artifacts.require('./contracts/tokens/FUN.sol');
+const KNC = artifacts.require('./contracts/tokens/KNC.sol');
+const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
+const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
+const DAI = artifacts.require('./contracts/tokens/DAI.sol');
+
+let tokens = []
+
+const toTxHash = (value) => {
+  if (typeof value === "string") {
+    // this is probably a tx hash already
+    return value;
+  } else if (typeof value.receipt === "object") {
+    // this is probably a tx object
+    return value.receipt.transactionHash;
+  } else {
+    throw "Unsupported tx type: " + value;
+  }
+}
+
+const mineTx = (promiseOrTx, interval) => {
+  return Promise.resolve(promiseOrTx)
+    .then(tx => {
+      const txHash = toTxHash(tx);
+
+      return new Promise((resolve, reject) => {
+        const getReceipt = () => {
+          web3.eth.getTransactionReceipt(txHash, (error, receipt) => {
+            if (error) {
+              reject(error);
+            } else if (receipt) {
+              resolve(receipt);
+            } else {
+              setTimeout(getReceipt, interval || 500);
+            }
+          })
+        }
+
+        getReceipt();
+      })
+    });
+}
 
 
-module.exports = function (deployer) {
-    Token1.deployed()
+module.exports = function (deployer, network, accounts) {
+    let admin, addresses
+
+    console.log(network)
+
+    if (network === 'development') return
+
+    if (network === 'rinkeby') {
+      admin = accounts[0]
+      addresses = config.accounts.rinkeby
+    } else {
+      admin = accounts[0]
+      addresses = accounts
+    }
+
+    console.log(addresses)
+
+    BNB.deployed()
         .then(async (_token1) => {
-            token1 = _token1;
-            token2 = await Token2.deployed();
-            token3 = await Token3.deployed();
+            tokens[0] = _token1;
+            tokens[1] = await OMG.deployed();
+            tokens[2] = await ZRX.deployed();
+            tokens[3] = await AE.deployed();
+            tokens[4] = await TRX.deployed();
+            tokens[5] = await MKR.deployed();
+            tokens[6] = await BAT.deployed();
+            tokens[7] = await REP.deployed();
+            tokens[8] = await BTM.deployed();
+            tokens[9] = await NPXS.deployed();
+            tokens[10] = await WTC.deployed();
+            tokens[11] = await KCS.deployed();
+            tokens[12] = await GNT.deployed();
+            tokens[13] = await PPT.deployed();
+            tokens[14] = await SNT.deployed();
+            tokens[15] = await DGX.deployed();
+            tokens[16] = await MITH.deployed();
+            tokens[17] = await AION.deployed();
+            tokens[18] = await LRC.deployed();
+            tokens[19] = await FUN.deployed();
+            tokens[20] = await KNC.deployed();
+            tokens[21] = await LOOM.deployed();
+            tokens[22] = await PRFT.deployed();
+            tokens[23] = await DAI.deployed();
 
-            await Promise.all(
-                [
+            let transfers = []
 
-                    token1.transfer(accounts[1], 1000e18, {from: admin}),
-                    token1.transfer(accounts[2], 1000e18, {from: admin}),
-                    token1.transfer(accounts[3], 1000e18, {from: admin}),
-                    token1.transfer(accounts[4], 1000e18, {from: admin}),
-                    token1.transfer(accounts[5], 1000e18, {from: admin}),
-                    token1.transfer(accounts[6], 1000e18, {from: admin}),
+            try {
+              for (let i = 0; i < tokens.length -1 ; i++) {
+                for (let j = 0; j < addresses.length - 1; j++) {
+                  transfers.push(tokens[i].transfer(addresses[j], 1000000e18, { from: admin }))
+                }
+              }
 
-                    token2.transfer(accounts[1], 1000e18, {from: admin}),
-                    token2.transfer(accounts[2], 1000e18, {from: admin}),
-                    token2.transfer(accounts[3], 1000e18, {from: admin}),
-                    token2.transfer(accounts[4], 1000e18, {from: admin}),
-                    token2.transfer(accounts[5], 1000e18, {from: admin}),
-                    token2.transfer(accounts[6], 1000e18, {from: admin}),
+              await Promise.all(transfers)
+            } catch (e) {
+              console.log(e.message)
+            }
 
-                    token3.transfer(accounts[1], 1000e18, {from: admin}),
-                    token3.transfer(accounts[2], 1000e18, {from: admin}),
-                    token3.transfer(accounts[3], 1000e18, {from: admin}),
-                    token3.transfer(accounts[4], 1000e18, {from: admin}),
-                    token3.transfer(accounts[5], 1000e18, {from: admin}),
-                    token3.transfer(accounts[6], 1000e18, {from: admin}),
-                ]
-            )
         })
 }

@@ -23,11 +23,8 @@ const FUN = artifacts.require('./contracts/tokens/FUN.sol');
 const KNC = artifacts.require('./contracts/tokens/KNC.sol');
 const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
-const DAI = artifacts.require('./contracts/tokens/DAI.sol');
 
 let weth;
-let exchange;
-let tokens = []
 
 
 module.exports = function (deployer, network, accounts) {
@@ -37,48 +34,12 @@ module.exports = function (deployer, network, accounts) {
     WETH.deployed()
         .then(async (_weth) => {
             weth = _weth;
-            exchange = await Exchange.deployed();
-            tokens[0] = await BNB.deployed();
-            tokens[1] = await OMG.deployed();
-            tokens[2] = await ZRX.deployed();
-            tokens[3] = await AE.deployed();
-            tokens[4] = await TRX.deployed();
-            tokens[5] = await MKR.deployed();
-            tokens[6] = await BAT.deployed();
-            tokens[7] = await REP.deployed();
-            tokens[8] = await BTM.deployed();
-            tokens[9] = await NPXS.deployed();
-            tokens[10] = await WTC.deployed();
-            tokens[11] = await KCS.deployed();
-            tokens[12] = await GNT.deployed();
-            tokens[13] = await PPT.deployed();
-            tokens[14] = await SNT.deployed();
-            tokens[15] = await DGX.deployed();
-            tokens[16] = await MITH.deployed();
-            tokens[17] = await AION.deployed();
-            tokens[18] = await LRC.deployed();
-            tokens[19] = await FUN.deployed();
-            tokens[20] = await KNC.deployed();
-            tokens[21] = await LOOM.deployed();
-            tokens[22] = await PRFT.deployed();
-            tokens[23] = await DAI.deployed();
+            let deposits = []
 
-
-            let tokenApprovals = []
-
-            if (network !== 'rinkeby') {
-              for(let token of tokens) {
-                for(let account of accounts) {
-                  tokenApprovals.push(token.approve(exchange.address, 1000000e18, { from: account }))
-                }
-              }
+            for(let account of accounts) {
+              deposits.push(weth.deposit({ from: account, value: 10000e18 }))
             }
 
-            try {
-              await Promise.all(tokenApprovals)
-            } catch (e) {
-              console.log(e)
-            }
-
+            await Promise.all(deposits)
         })
-}
+};

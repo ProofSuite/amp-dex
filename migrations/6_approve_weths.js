@@ -1,26 +1,49 @@
-const WETH = artifacts.require('./contracts/utils/WETH9.sol');
 const Exchange = artifacts.require('./Exchange.sol');
+const WETH = artifacts.require('./contracts/utils/WETH9.sol');
+const BNB = artifacts.require('./contracts/tokens/BNB.sol');
+const OMG = artifacts.require('./contracts/tokens/OMG.sol');
+const ZRX = artifacts.require('./contracts/tokens/ZRX.sol');
+const AE = artifacts.require('./contracts/tokens/AE.sol');
+const TRX = artifacts.require('./contracts/tokens/TRX.sol');
+const MKR = artifacts.require('./contracts/tokens/MKR.sol');
+const BAT = artifacts.require('./contracts/tokens/BAT.sol');
+const REP = artifacts.require('./contracts/tokens/REP.sol');
+const BTM = artifacts.require('./contracts/tokens/BTM.sol');
+const NPXS = artifacts.require('./contracts/tokens/NPXS.sol');
+const WTC = artifacts.require('./contracts/tokens/WTC.sol');
+const KCS = artifacts.require('./contracts/tokens/KCS.sol');
+const GNT = artifacts.require('./contracts/tokens/GNT.sol');
+const PPT = artifacts.require('./contracts/tokens/PPT.sol');
+const SNT = artifacts.require('./contracts/tokens/SNT.sol');
+const DGX = artifacts.require('./contracts/tokens/DGX.sol');
+const MITH = artifacts.require('./contracts/tokens/MITH.sol');
+const AION = artifacts.require('./contracts/tokens/AION.sol');
+const LRC = artifacts.require('./contracts/tokens/LRC.sol');
+const FUN = artifacts.require('./contracts/tokens/FUN.sol');
+const KNC = artifacts.require('./contracts/tokens/KNC.sol');
+const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
+const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 
-const accounts = web3.eth.accounts;
-let weth;
-let exchange;
 
 
-module.exports = function (deployer) {
+
+
+module.exports = function (deployer, network, accounts) {
+  let weth;
+  let exchange;
+
+  if (network === 'development') return
+
     WETH.deployed()
         .then(async (_weth) => {
+            let approvals = []
             weth = _weth;
             exchange = await Exchange.deployed();
 
-            await Promise.all(
-                [
-                    weth.approve(exchange.address, 1e18, {from: accounts[1]}),
-                    weth.approve(exchange.address, 1e18, {from: accounts[2]}),
-                    weth.approve(exchange.address, 1e18, {from: accounts[3]}),
-                    weth.approve(exchange.address, 1e18, {from: accounts[4]}),
-                    weth.approve(exchange.address, 1e18, {from: accounts[5]}),
-                    weth.approve(exchange.address, 1e18, {from: accounts[6]}),
-                ]
-            )
+            for(let account of accounts) {
+              approvals.push(weth.approve(exchange.address, 500000e18, { from: account }))
+            }
+
+            await Promise.all(approvals)
         })
 };
