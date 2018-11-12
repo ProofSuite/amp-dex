@@ -31,6 +31,9 @@ let tokens = []
 
 
 module.exports = function (deployer, network, accounts) {
+
+  if (network === 'development') return
+
     WETH.deployed()
         .then(async (_weth) => {
             weth = _weth;
