@@ -10,14 +10,14 @@ module.exports = function (deployer, network, accounts) {
 
     if (network === 'development') {
       ProofToken.deployed().then(async(_proofToken) => {
-        rewardCollector = await deployer.deploy(RewardCollector, _proofToken)
+        rewardCollector = await deployer.deploy(RewardCollector, _proofToken.address)
         rewardPools = await deployer.deploy(RewardPools, _proofToken.address, rewardCollector.address)
       })
     }
 
     if (network === 'rinkeby') {
       ProofToken.deployed().then(async(_proofToken) => {
-        rewardCollector = await deployer.deploy(RewardCollector, _proofToken)
+        rewardCollector = await deployer.deploy(RewardCollector, _proofToken.address)
         rewardPools = await deployer.deploy(RewardPools, _proofToken.address, rewardCollector.address)
       })
     }

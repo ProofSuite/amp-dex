@@ -4,7 +4,7 @@ import './utils/SafeMath.sol';
 import './utils/Owned.sol';
 import './interfaces/ProofToken.sol';
 import './interfaces/ERC20.sol';
-import './interfaces/RewardCollector.sol';
+import './RewardCollector.sol';
 
 
 contract RewardPools is Owned {
@@ -21,15 +21,16 @@ contract RewardPools is Owned {
   uint256 public currentPoolBalance;
 
   mapping(uint256 => mapping(address => uint256)) public poolBalances;
-  mapping(uint256 => uint256) public nthPoolBalance;
   mapping(address => uint256) public withdrawals;
 
-  mapping(address => ERC20) public quotes;
-  address[] public quoteList;
+  mapping(address => bool) public quotes;
+  address[] public quoteTokenList;
 
 
   function RewardPools(address _PRFTAddress, address _rewardCollector) public
   {
+    creationBlockNumber = block.number;
+    blocksPerEpoch = 20;
     proofToken = ProofTokenInterface(_PRFTAddress);
     rewardCollector = _rewardCollector;
   }
@@ -39,8 +40,28 @@ contract RewardPools is Owned {
     revert();
   }
 
+  function balanceOfPool(uint256 _poolEpoch, address _tokenAddress) public returns (uint256) {
+    return poolBalances[_poolEpoch][_tokenAddress];
+  }
+
+  function removeQuoteToken(address _tokenAddress) {
+    uint i = 0;
+    while (quoteTokenList[i] != _tokenAddress) {
+        i++;
+    }
+
+    while (i<quoteTokenList.length-1) {
+      quoteTokenList[i] = quoteTokenList[i+1];
+      i++;
+    }
+
+    quoteTokenList.length--;
+    quotes[_tokenAddress] = false;
+  }
+
   function registerQuoteToken(address _tokenAddress) onlyOwner public {
-    quotes[_tokenAddress] = ERC20(_tokenAddress);
+    quotes[_tokenAddress] = true;
+    quoteTokenList.push(_tokenAddress);
   }
 
   function withdrawRewards() public
@@ -48,13 +69,13 @@ contract RewardPools is Owned {
     require(msg.sender != 0x0);
     checkCurrentEpoch();
 
-    uint256 withdrawalValue = 0;
     uint256 lastWithdrawal = withdrawals[msg.sender];
     require(lastWithdrawal != currentEpoch);
 
 
-    for (uint256 i = 0; i < quoteList.length; i++) {
-      address tokenAddress = quoteList[i];
+    for (uint256 i = 0; i < quoteTokenList.length; i++) {
+      address tokenAddress = quoteTokenList[i];
+      uint256 totalTokenRewards = 0;
 
       for (uint256 j = lastWithdrawal; j < currentEpoch; j++)
       {
@@ -63,7 +84,8 @@ contract RewardPools is Owned {
         uint256 totalSupply = proofToken.totalSupply();
 
         uint256 currentPoolTokenRewards = (poolBalances[j][tokenAddress] * balanceAtEpochStart) / totalSupply;
-        uint256 totalTokenRewards = totalTokenRewards + currentPoolTokenRewards;
+        totalTokenRewards = totalTokenRewards + currentPoolTokenRewards;
+        poolBalances[j][tokenAddress] -= currentPoolTokenRewards;
       }
 
       ERC20(tokenAddress).transfer(msg.sender, totalTokenRewards);
@@ -78,12 +100,12 @@ contract RewardPools is Owned {
     uint256 computedEpoch = computeCurrentEpoch();
 
     if (computedEpoch != lastEpoch) {
-      for(uint256 i = 0; i < quoteList.length; i++) {
-        address tokenAddress = quoteList[i];
-        uint256 tokenBalance = ERC20(tokenAddress).balanceOf(owner);
+      for(uint256 i = 0; i < quoteTokenList.length; i++) {
+        address tokenAddress = quoteTokenList[i];
+        uint256 tokenBalance = ERC20(tokenAddress).balanceOf(rewardCollector);
 
-        RewardCollectorInterface(rewardCollector).transferTokensToPool(tokenAddress, tokenBalance);
-        poolBalances[lastEpoch][tokenAddress] = tokenBalance;
+        RewardCollector(rewardCollector).transferTokensToPool(tokenAddress, tokenBalance);
+        poolBalances[computedEpoch - 1][tokenAddress] = tokenBalance;
       }
 
       currentEpoch = computedEpoch;

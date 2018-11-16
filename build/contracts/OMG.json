@@ -12534,8 +12534,8 @@
         }
       },
       "links": {},
-      "address": "0xdb1b7a392b71f4345921b086e27a8105d56bb40a",
-      "transactionHash": "0xc30ac305e48be899cd15912c7b73ffffba548db724aff9570fbd844118a58935"
+      "address": "0x0e960ef53b8efa1d44c4b52f997bca25168cf501",
+      "transactionHash": "0x60c05b5590760ad3ebe6dc5f9a37cccba7fab94a7d66e1826c18a50cd988430b"
     },
     "8888": {
       "events": {
@@ -12660,5 +12660,5 @@
     }
   },
   "schemaVersion": "2.0.1",
-  "updatedAt": "2018-11-16T13:12:03.544Z"
+  "updatedAt": "2018-11-16T17:08:15.189Z"
 }

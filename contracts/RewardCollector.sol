@@ -19,7 +19,7 @@ contract RewardCollector is Owned {
     revert();
   }
 
-  function setRewardPools(address _rewardPools) public
+  function setRewardPools(address _rewardPools) onlyOwner public
   {
     rewardPools = _rewardPools;
   }
