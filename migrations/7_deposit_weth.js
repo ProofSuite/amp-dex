@@ -1,4 +1,3 @@
-const Exchange = artifacts.require('./Exchange.sol');
 const WETH = artifacts.require('./contracts/utils/WETH9.sol');
 const BNB = artifacts.require('./contracts/tokens/BNB.sol');
 const OMG = artifacts.require('./contracts/tokens/OMG.sol');
@@ -24,26 +23,20 @@ const KNC = artifacts.require('./contracts/tokens/KNC.sol');
 const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 
-
-
-
+let weth;
 
 module.exports = function (deployer, network, accounts) {
-  let weth;
-  let exchange;
-
   if (network === 'development') return
 
     WETH.deployed()
         .then(async (_weth) => {
-            let approvals = []
             weth = _weth;
-            exchange = await Exchange.deployed();
+            let deposits = []
 
             for(let account of accounts) {
-              approvals.push(weth.approve(exchange.address, 500000e18, { from: account }))
+              deposits.push(weth.deposit({ from: account, value: 10000e18 }))
             }
 
-            await Promise.all(approvals)
+            await Promise.all(deposits)
         })
 };
