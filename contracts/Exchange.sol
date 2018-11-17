@@ -20,7 +20,6 @@ contract Exchange is Owned {
     }
 
     string constant public VERSION = "1.0.0";
-
     address public wethToken;
     address public rewardAccount;
     mapping(address => bool) public operators;
@@ -115,6 +114,19 @@ contract Exchange is Owned {
       });
     }
 
+    function getPairPricepointMultiplier(address _baseToken, address _quoteToken) public constant returns (uint256) {
+      bytes32 pairID = getPairHash(_baseToken, _quoteToken);
+
+      return pairs[pairID].pricepointMultiplier;
+    }
+
+    function pairIsRegistered(address _baseToken, address _quoteToken) public constant returns (bool) {
+      bytes32 pairID = getPairHash(_baseToken, _quoteToken);
+      if (pairs[pairID].pricepointMultiplier == 0) return false;
+
+      return true;
+    }
+
     /// @dev Sets the address of WETH token.
     /// @param _wethToken An address to set as WETH token address.
     /// @return Success on setting WETH token address.
@@ -155,7 +167,6 @@ contract Exchange is Owned {
     {
       bytes32[] memory makerOrderHashes = new bytes32[](orderAddresses.length);
       bytes32[] memory takerOrderHashes = new bytes32[](orderAddresses.length);
-      bytes32[] memory tradeHashes = new bytes32[](orderAddresses.length);
 
       for (uint i = 0; i < orderAddresses.length; i++) {
         bool valid = validateSignatures(

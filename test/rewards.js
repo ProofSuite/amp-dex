@@ -76,7 +76,7 @@ contract('Rewards', (accounts) => {
 
     it('should not transfer tokens to withdrawRewards caller if the epoch is not finished', async() => {
       await tusd.transfer(rewardCollector.address, 1000, { from: fund })
-      await rewardPools.withdrawRewards({ from: wallet })
+      await expectRevert(rewardPools.withdrawRewards({ from: wallet }))
 
       let walletTUSDBalance = await tusd.balanceOf(wallet)
       walletTUSDBalance.should.be.bignumber.equal(0)
@@ -152,8 +152,8 @@ contract('Rewards', (accounts) => {
       let rewardPoolsContractDAIBalance = await dai.balanceOf(rewardPools.address)
       let firstPoolTUSDBalance = await rewardPools.balanceOfPool.call(0, tusd.address)
       let secondPoolTUSDBalance = await rewardPools.balanceOfPool.call(1, tusd.address)
-      let firstPoolDAIBalance = await dai.balanceOf(rewardPools.address)
-      let secondPoolDAIBalance = await dai.balanceOf(rewardPools.address)
+      let firstPoolDAIBalance = await rewardPools.balanceOfPool.call(0, dai.address)
+      let secondPoolDAIBalance = await rewardPools.balanceOfPool.call(1, dai.address)
 
       walletTUSDBalance.should.be.bignumber.equal(250)
       walletDAIBalance.should.be.bignumber.equal(250)
@@ -187,6 +187,38 @@ contract('Rewards', (accounts) => {
       rewardPoolsContractTUSDBalance.should.be.bignumber.equal(750)
       firstPoolTUSDBalance.should.be.bignumber.equal(0)
       secondPoolTUSDBalance.should.be.bignumber.equal(750)
+    })
+
+    it('totalUserReward should return the correct due balance for a certain token', async () => {
+      await tusd.transfer(rewardCollector.address, 1000, { from: fund })
+      await advanceToBlock(epoch2 + 1)
+
+      let userReward = await rewardPools.totalUserReward(wallet, tusd.address)
+      userReward.should.be.bignumber.equal(250)
+    })
+
+    it('totalUserReward should return the correct due balance for a certain token (2 epochs)', async () => {
+      await tusd.transfer(rewardCollector.address, 1000, { from: fund })
+      await advanceToBlock(epoch2 + 1)
+
+      await tusd.transfer(rewardCollector.address, 1000, { from: fund })
+      await advanceToBlock(epoch3 + 1)
+
+      let userReward = await rewardPools.totalUserReward(wallet, tusd.address)
+      userReward.should.be.bignumber.equal(500)
+    })
+
+    it('totalUserReward should return the correct due balance for a certain token after a user withdraws rewards', async () => {
+      await tusd.transfer(rewardCollector.address, 1000, { from: fund })
+      await advanceToBlock(epoch2 + 1)
+
+      await rewardPools.withdrawRewards({ from: wallet })
+
+      await tusd.transfer(rewardCollector.address, 1000, { from: fund })
+      await advanceToBlock(epoch3 + 1)
+
+      let userReward = await rewardPools.totalUserReward(wallet, tusd.address)
+      userReward.should.be.bignumber.equal(250)
     })
   })
 })
