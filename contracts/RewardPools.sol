@@ -40,6 +40,44 @@ contract RewardPools is Owned {
     revert();
   }
 
+  function totalUserReward(address _accountAddress, address _tokenAddress) public constant returns (uint256) {
+    uint256 lastEpoch = currentEpoch;
+    uint256 computedEpoch = computeCurrentEpoch();
+    uint256 lastWithdrawal = withdrawals[_accountAddress];
+    uint256 totalReward;
+    uint256 newPoolBalance;
+    uint256 blockNumberAtEpochStart;
+    uint256 balanceAtEpochStart;
+    uint256 totalSupply;
+    uint256 currentPoolReward;
+
+    if (computedEpoch != lastEpoch) {
+      newPoolBalance = ERC20(_tokenAddress).balanceOf(rewardCollector);
+    } else {
+      newPoolBalance = 0;
+    }
+
+    for (uint256 j = lastWithdrawal; j <= computedEpoch - 1; j++)
+    {
+      blockNumberAtEpochStart = getBlockNumberAtEpochStart(j);
+      balanceAtEpochStart = proofToken.balanceOfAt(_accountAddress, blockNumberAtEpochStart);
+      totalSupply = proofToken.totalSupply();
+      currentPoolReward = (poolBalances[j][_tokenAddress] * balanceAtEpochStart) / totalSupply;
+      totalReward = totalReward + currentPoolReward;
+    }
+
+    if (computedEpoch != lastEpoch) {
+      newPoolBalance = ERC20(_tokenAddress).balanceOf(rewardCollector);
+      blockNumberAtEpochStart = getBlockNumberAtEpochStart(computedEpoch);
+      totalSupply = proofToken.totalSupply();
+      balanceAtEpochStart = proofToken.balanceOfAt(_accountAddress, blockNumberAtEpochStart);
+      currentPoolReward = (newPoolBalance * balanceAtEpochStart) / totalSupply;
+      totalReward = totalReward + currentPoolReward;
+    }
+
+    return totalReward;
+  }
+
   function balanceOfPool(uint256 _poolEpoch, address _tokenAddress) public returns (uint256) {
     return poolBalances[_poolEpoch][_tokenAddress];
   }
