@@ -22,14 +22,14 @@ contract Exchange is Owned {
     string constant public VERSION = "1.0.0";
 
     address public wethToken;
-    address public feeAccount;
+    address public rewardAccount;
     mapping(address => bool) public operators;
     mapping(bytes32 => uint) public filled;       // Mappings of orderHash => amount of amountBuy filled.
     mapping(bytes32 => bool) public traded;       // Mappings of tradeHash => bool value representing whether the trade is completed(true) or incomplete(false).
     mapping(bytes32 => Pair) public pairs;
 
     event LogWethTokenUpdate(address oldWethToken, address newWethToken);
-    event LogFeeAccountUpdate(address oldFeeAccount, address newFeeAccount);
+    event LogRewardAccountUpdate(address oldRewardAccount, address newRewardAccount);
     event LogOperatorUpdate(address operator, bool isOperator);
 
     event LogBatchTrades(
@@ -99,9 +99,9 @@ contract Exchange is Owned {
         _;
     }
 
-    constructor(address _wethToken, address _feeAccount) public {
+    constructor(address _wethToken, address _rewardAccount) public {
         wethToken = _wethToken;
-        feeAccount = _feeAccount;
+        rewardAccount = _rewardAccount;
     }
 
     function registerPair(address _baseToken, address _quoteToken, uint256 _pricepointMultiplier) public onlyOwner returns (bool) {
@@ -125,12 +125,12 @@ contract Exchange is Owned {
     }
 
     /// @dev Sets the address of fees account.
-    /// @param _feeAccount An address to set as fees account.
+    /// @param _rewardAccount An address to set as fees account.
     /// @return Success on setting fees account.
-    function setFeeAccount(address _feeAccount) public onlyOwner returns (bool) {
-        require(_feeAccount != address(0));
-        emit LogFeeAccountUpdate(feeAccount,_feeAccount);
-        feeAccount = _feeAccount;
+    function setFeeAccount(address _rewardAccount) public onlyOwner returns (bool) {
+        require(_rewardAccount != address(0));
+        emit LogRewardAccountUpdate(rewardAccount,_rewardAccount);
+        rewardAccount = _rewardAccount;
         return true;
     }
 
@@ -204,10 +204,6 @@ contract Exchange is Owned {
       bytes32[4] memory rs
     ) public onlyOperator returns (bool)
     {
-      bytes32[] memory makerOrderHashes = new bytes32[](orderAddresses.length);
-      bytes32[] memory takerOrderHashes = new bytes32[](orderAddresses.length);
-      bytes32[] memory tradeHashes = new bytes32[](orderAddresses.length);
-
       bool valid = validateSignatures(
         orderValues,
         orderAddresses,
@@ -218,7 +214,7 @@ contract Exchange is Owned {
       if (!valid) return false;
 
       uint256 pricepointMultiplier = validatePair(orderAddresses);
-      var (makerOrderHash, takerOrderHash, traded) = executeTrade(
+      executeTrade(
         orderValues,
         orderAddresses,
         amount,
@@ -365,11 +361,11 @@ contract Exchange is Owned {
 
         if (makerOrder.side == 0) {
           require(ERC20(makerOrder.quoteToken).transferFrom(makerOrder.userAddress, takerOrder.userAddress, quoteTokenAmount));
-          require(ERC20(makerOrder.quoteToken).transferFrom(makerOrder.userAddress, feeAccount, fee));
+          require(ERC20(makerOrder.quoteToken).transferFrom(makerOrder.userAddress, rewardAccount, fee));
           require(ERC20(takerOrder.baseToken).transferFrom(takerOrder.userAddress, makerOrder.userAddress, baseTokenAmount));
         } else {
           require(ERC20(makerOrder.baseToken).transferFrom(makerOrder.userAddress, takerOrder.userAddress, baseTokenAmount));
-          require(ERC20(takerOrder.quoteToken).transferFrom(takerOrder.userAddress, feeAccount, fee));
+          require(ERC20(takerOrder.quoteToken).transferFrom(takerOrder.userAddress, rewardAccount, fee));
           require(ERC20(takerOrder.quoteToken).transferFrom(takerOrder.userAddress, makerOrder.userAddress, quoteTokenAmount - fee));
         }
 
@@ -390,7 +386,7 @@ contract Exchange is Owned {
 
 
       uint256 fee = getPartialAmount(amount, takerOrderAmount, feeTake);
-      require(ERC20(quoteToken).transferFrom(userAddress, feeAccount, fee));
+      require(ERC20(quoteToken).transferFrom(userAddress, rewardAccount, fee));
     }
 
 
@@ -411,7 +407,7 @@ contract Exchange is Owned {
       }
 
       uint256 fee = getPartialAmount(totalAmount, takerOrderAmount, feeTake);
-      require(ERC20(quoteToken).transferFrom(userAddress, feeAccount, fee));
+      require(ERC20(quoteToken).transferFrom(userAddress, rewardAccount, fee));
     }
 
 
@@ -586,7 +582,7 @@ contract Exchange is Owned {
       address[4] orderAddresses,
       bytes32[] makerOrderHashes,
       bytes32[] takerOrderHashes
-    ) {
+    ) public {
 
       emit LogBatchTrades(
         makerOrderHashes,

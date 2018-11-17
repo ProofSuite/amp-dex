@@ -24,22 +24,22 @@ const KNC = artifacts.require('./contracts/tokens/KNC.sol');
 const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 
-let weth;
-
-
 module.exports = function (deployer, network, accounts) {
+  let weth;
+  let exchange;
 
   if (network === 'development') return
 
     WETH.deployed()
         .then(async (_weth) => {
+            let approvals = []
             weth = _weth;
-            let deposits = []
+            exchange = await Exchange.deployed();
 
             for(let account of accounts) {
-              deposits.push(weth.deposit({ from: account, value: 10000e18 }))
+              approvals.push(weth.approve(exchange.address, 500000e18, { from: account }))
             }
 
-            await Promise.all(deposits)
+            await Promise.all(approvals)
         })
 };

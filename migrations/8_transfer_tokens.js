@@ -1,7 +1,5 @@
 const config = require('../config')
 
-const Exchange = artifacts.require('./Exchange.sol');
-const WETH = artifacts.require('./contracts/utils/WETH9.sol');
 const BNB = artifacts.require('./contracts/tokens/BNB.sol');
 const OMG = artifacts.require('./contracts/tokens/OMG.sol');
 const ZRX = artifacts.require('./contracts/tokens/ZRX.sol');
@@ -68,8 +66,6 @@ const mineTx = (promiseOrTx, interval) => {
 module.exports = function (deployer, network, accounts) {
     let admin, addresses
 
-    console.log(network)
-
     if (network === 'development') return
 
     if (network === 'rinkeby') {
@@ -79,8 +75,6 @@ module.exports = function (deployer, network, accounts) {
       admin = accounts[0]
       addresses = accounts
     }
-
-    console.log(addresses)
 
     BNB.deployed()
         .then(async (_token1) => {
