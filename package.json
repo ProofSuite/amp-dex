@@ -19,6 +19,9 @@
       "delay": 2500
     }
   },
+  "engines": {
+    "node": ">=6.0.0"
+  },
   "author": "Douglas von Kohorn",
   "license": "MIT",
   "devDependencies": {

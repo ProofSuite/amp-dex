@@ -5,5 +5,8 @@ const RewardCollector = artifacts.require('./contracts/utils/RewardCollector.sol
 module.exports = function (deployer, network, accounts) {
     let admin = accounts[0]
 
-    deployer.deploy(WETH)
+    if (network !== 'ethereum') {
+      deployer.deploy(WETH)
+    }
+    
 };
