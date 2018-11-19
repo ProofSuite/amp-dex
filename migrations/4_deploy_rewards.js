@@ -21,4 +21,12 @@ module.exports = function (deployer, network, accounts) {
         rewardPools = await deployer.deploy(RewardPools, _proofToken.address, rewardCollector.address)
       })
     }
+
+    if (network === 'ethereum') {
+      ProofToken.deployed().then(async(_proofToken) => {
+        const proofTokenAddress = 0x0
+        rewardCollector = await deployer.deploy(RewardCollector, proofTokenAddress)
+        rewardPools = await deployer.deploy(RewardPools, proofTokenAddress, rewardCollector.address)
+      })
+    }
 };

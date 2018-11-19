@@ -10,7 +10,7 @@ import '../utils/Owned.sol';
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract REP is Owned {
+contract USDC is Owned {
 
   using SafeMath for uint256;
 
@@ -24,10 +24,10 @@ contract REP is Owned {
 
   uint256 totalSupply_;
   bool public mintingFinished = false;
-  string public constant symbol = "REP";
-  uint8 public constant decimals = 18;
+  string public constant symbol = "USDC";
+  uint8 public constant decimals = 6;
 
-  function REP(address _to, uint256 _amount) {
+  function USDC(address _to, uint256 _amount) {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
   }

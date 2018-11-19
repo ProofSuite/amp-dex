@@ -22,7 +22,8 @@ const KNC = artifacts.require('./contracts/tokens/KNC.sol');
 const LOOM = artifacts.require('./contracts/tokens/LOOM.sol');
 const PRFT = artifacts.require('./contracts/tokens/PRFT.sol');
 const DAI = artifacts.require('./contracts/tokens/DAI.sol');
-const TUSD = artifacts.require('./contracts/tokens/TUSD.sol')
+const TUSD = artifacts.require('./contracts/tokens/TUSD.sol');
+const USDC = artifacts.require('./contracts/tokens/USDC.sol');
 
 module.exports = function (deployer, network, accounts) {
     let admin = accounts[0]
@@ -54,5 +55,6 @@ module.exports = function (deployer, network, accounts) {
         await deployer.deploy(TUSD, admin, 10000000000e18);
         await deployer.deploy(DAI, admin, 10000000000e18);
         await deployer.deploy(TUSD, admin, 10000000000e18);
+        await deployer.deploy(USDC, admin, 10000000000e18);
     })
 };
