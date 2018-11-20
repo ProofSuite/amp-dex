@@ -8,8 +8,8 @@ let config = {
     password: process.env.ROPSTEN_PASSWORD
   },
   ethereum: {
-    keystore: process.env.ETHEREUM_KEYSTORE,
-    password: process.env.ETHEREUM_PASSWORD
+    keystore: process.env.MAINNET_KEYSTORE,
+    password: process.env.MAINNET_PASSWORD
   }
 }
 

@@ -13,16 +13,14 @@ require('babel-polyfill')
 const WalletProvider = require('truffle-wallet-provider')
 const EthereumWallet = require('ethereumjs-wallet')
 
-
-// const ethereumKeystore = fs.readFileSync(config.ethereum.keystore).toString()
+const ethereumKeystore = fs.readFileSync(secret.ethereum.keystore).toString()
 const rinkebyKeystore = fs.readFileSync(secret.rinkeby.keystore).toString()
 
-// const ethereumWallet = EthereumWallet.fromV3(ethereumKeystore, secret.ethereum.password)
+const ethereumWallet = EthereumWallet.fromV3(ethereumKeystore, secret.ethereum.password, true)
 const rinkebyWallet = EthereumWallet.fromV3(rinkebyKeystore, secret.rinkeby.password)
 
-
 const providers = {
-  // 'ethereum': new WalletProvider(ethereumWallet, config.infura.ethereum),
+  'ethereum': new WalletProvider(ethereumWallet, config.infura.ethereum),
   'rinkeby': new WalletProvider(rinkebyWallet, config.infura.rinkeby)
 }
 
