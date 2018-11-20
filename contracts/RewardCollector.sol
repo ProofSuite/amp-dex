@@ -1,15 +1,13 @@
 pragma solidity 0.4.24;
 
 import './utils/Owned.sol';
-import './interfaces/ProofToken.sol';
 import './interfaces/ERC20.sol';
 import './RewardPools.sol';
 
 contract RewardCollector is Owned {
-  ProofTokenInterface public proofToken;
   address public rewardPools;
 
-  modifier onlyRewardsPool {
+  modifier onlyRewardPools {
     require(msg.sender == rewardPools);
     _;
   }
@@ -24,12 +22,11 @@ contract RewardCollector is Owned {
     rewardPools = _rewardPools;
   }
 
-  function RewardCollector(address _PRFTAddress) public
+  constructor() public
   {
-    proofToken = ProofTokenInterface(_PRFTAddress);
   }
 
-  function transferTokensToPool(address _tokenAddress, uint256 _value) onlyRewardsPool public
+  function transferTokensToPool(address _tokenAddress, uint256 _value) onlyRewardPools public
   {
     require(ERC20(_tokenAddress).transfer(rewardPools, _value));
   }

@@ -30,19 +30,19 @@
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity 0.4.24;\n\ncontract RewardCollectorInterface\n{\n  function transferTokensToPool(address _tokenAddress, uint256 _value) public returns (uint256);\n}",
-  "sourcePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/amp-dex/contracts/interfaces/RewardCollector.sol",
+  "sourcePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/amp-dex/contracts/interfaces/RewardCollectorInterface.sol",
   "ast": {
-    "absolutePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/amp-dex/contracts/interfaces/RewardCollector.sol",
+    "absolutePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/amp-dex/contracts/interfaces/RewardCollectorInterface.sol",
     "exportedSymbols": {
       "RewardCollectorInterface": [
-        2517
+        2471
       ]
     },
-    "id": 2518,
+    "id": 2472,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 2507,
+        "id": 2461,
         "literals": [
           "solidity",
           "0.4",
@@ -57,9 +57,9 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 2517,
+        "id": 2471,
         "linearizedBaseContracts": [
-          2517
+          2471
         ],
         "name": "RewardCollectorInterface",
         "nodeType": "ContractDefinition",
@@ -67,7 +67,7 @@
           {
             "body": null,
             "documentation": null,
-            "id": 2516,
+            "id": 2470,
             "implemented": false,
             "isConstructor": false,
             "isDeclaredConst": false,
@@ -75,15 +75,15 @@
             "name": "transferTokensToPool",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 2512,
+              "id": 2466,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2509,
+                  "id": 2463,
                   "name": "_tokenAddress",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2516,
+                  "scope": 2470,
                   "src": "93:21:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -92,7 +92,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 2508,
+                    "id": 2462,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "93:7:6",
@@ -106,10 +106,10 @@
                 },
                 {
                   "constant": false,
-                  "id": 2511,
+                  "id": 2465,
                   "name": "_value",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2516,
+                  "scope": 2470,
                   "src": "116:14:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -118,7 +118,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 2510,
+                    "id": 2464,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "116:7:6",
@@ -135,15 +135,15 @@
             },
             "payable": false,
             "returnParameters": {
-              "id": 2515,
+              "id": 2469,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2514,
+                  "id": 2468,
                   "name": "",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2516,
+                  "scope": 2470,
                   "src": "148:7:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -152,7 +152,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 2513,
+                    "id": 2467,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "148:7:6",
@@ -167,31 +167,31 @@
               ],
               "src": "147:9:6"
             },
-            "scope": 2517,
+            "scope": 2471,
             "src": "63:94:6",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
-        "scope": 2518,
+        "scope": 2472,
         "src": "25:134:6"
       }
     ],
     "src": "0:159:6"
   },
   "legacyAST": {
-    "absolutePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/amp-dex/contracts/interfaces/RewardCollector.sol",
+    "absolutePath": "/Users/davidvanisacker/Programming/Ethereum/Proofsuite/amp-dex/contracts/interfaces/RewardCollectorInterface.sol",
     "exportedSymbols": {
       "RewardCollectorInterface": [
-        2517
+        2471
       ]
     },
-    "id": 2518,
+    "id": 2472,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 2507,
+        "id": 2461,
         "literals": [
           "solidity",
           "0.4",
@@ -206,9 +206,9 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 2517,
+        "id": 2471,
         "linearizedBaseContracts": [
-          2517
+          2471
         ],
         "name": "RewardCollectorInterface",
         "nodeType": "ContractDefinition",
@@ -216,7 +216,7 @@
           {
             "body": null,
             "documentation": null,
-            "id": 2516,
+            "id": 2470,
             "implemented": false,
             "isConstructor": false,
             "isDeclaredConst": false,
@@ -224,15 +224,15 @@
             "name": "transferTokensToPool",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 2512,
+              "id": 2466,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2509,
+                  "id": 2463,
                   "name": "_tokenAddress",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2516,
+                  "scope": 2470,
                   "src": "93:21:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -241,7 +241,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 2508,
+                    "id": 2462,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "93:7:6",
@@ -255,10 +255,10 @@
                 },
                 {
                   "constant": false,
-                  "id": 2511,
+                  "id": 2465,
                   "name": "_value",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2516,
+                  "scope": 2470,
                   "src": "116:14:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -267,7 +267,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 2510,
+                    "id": 2464,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "116:7:6",
@@ -284,15 +284,15 @@
             },
             "payable": false,
             "returnParameters": {
-              "id": 2515,
+              "id": 2469,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 2514,
+                  "id": 2468,
                   "name": "",
                   "nodeType": "VariableDeclaration",
-                  "scope": 2516,
+                  "scope": 2470,
                   "src": "148:7:6",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -301,7 +301,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 2513,
+                    "id": 2467,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "148:7:6",
@@ -316,14 +316,14 @@
               ],
               "src": "147:9:6"
             },
-            "scope": 2517,
+            "scope": 2471,
             "src": "63:94:6",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "public"
           }
         ],
-        "scope": 2518,
+        "scope": 2472,
         "src": "25:134:6"
       }
     ],
@@ -335,5 +335,5 @@
   },
   "networks": {},
   "schemaVersion": "2.0.1",
-  "updatedAt": "2018-11-17T16:16:24.477Z"
+  "updatedAt": "2018-11-20T11:55:19.290Z"
 }

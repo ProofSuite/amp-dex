@@ -1,32 +1,22 @@
-const Exchange = artifacts.require('./Exchange.sol');
-const ProofToken = artifacts.require('./tokens/ProofToken.sol');
-const RewardCollector = artifacts.require('./RewardCollector.sol');
-const RewardPools = artifacts.require('./RewardPools.sol');
+const Exchange = artifacts.require('./contracts/Exchange.sol');
+const ProofToken = artifacts.require('./contracts/tokens/ProofToken.sol');
+const RewardCollector = artifacts.require('./contracts/RewardCollector.sol');
+const RewardPools = artifacts.require('./contracts/RewardPools.sol');
+
+const mainnetProofTokenAddress = '0xc5cea8292e514405967d958c2325106f2f48da77'
 
 module.exports = function (deployer, network, accounts) {
     let admin = accounts[0]
-    let weth;
-    let exchange;
+    let proofToken, rewardCollector, rewardPools
 
-    if (network === 'development') {
-      ProofToken.deployed().then(async(_proofToken) => {
-        rewardCollector = await deployer.deploy(RewardCollector, _proofToken.address)
-        rewardPools = await deployer.deploy(RewardPools, _proofToken.address, rewardCollector.address)
-      })
-    }
-
-    if (network === 'rinkeby') {
-      ProofToken.deployed().then(async(_proofToken) => {
-        rewardCollector = await deployer.deploy(RewardCollector, _proofToken.address)
-        rewardPools = await deployer.deploy(RewardPools, _proofToken.address, rewardCollector.address)
-      })
-    }
-
-    if (network === 'ethereum') {
-      ProofToken.deployed().then(async(_proofToken) => {
-        const proofTokenAddress = 0x0
-        rewardCollector = await deployer.deploy(RewardCollector, proofTokenAddress)
-        rewardPools = await deployer.deploy(RewardPools, proofTokenAddress, rewardCollector.address)
-      })
-    }
-};
+    deployer.deploy(RewardCollector)
+    .then(async(result) => {
+      rewardCollector = result
+      if (network === 'ethereum') {
+        return deployer.deploy(RewardPools, mainnetProofTokenAddress, rewardCollector.address)          
+      } else {
+        proofToken = await ProofToken.deployed()
+        return deployer.deploy(RewardPools, proofToken.address, rewardCollector.address)  
+      }
+    })
+}

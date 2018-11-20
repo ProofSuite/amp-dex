@@ -20,14 +20,12 @@ contract Exchange is Owned {
     }
 
     string constant public VERSION = "1.0.0";
-    address public wethToken;
     address public rewardAccount;
     mapping(address => bool) public operators;
     mapping(bytes32 => uint) public filled;       // Mappings of orderHash => amount of amountBuy filled.
     mapping(bytes32 => bool) public traded;       // Mappings of tradeHash => bool value representing whether the trade is completed(true) or incomplete(false).
     mapping(bytes32 => Pair) public pairs;
 
-    event LogWethTokenUpdate(address oldWethToken, address newWethToken);
     event LogRewardAccountUpdate(address oldRewardAccount, address newRewardAccount);
     event LogOperatorUpdate(address operator, bool isOperator);
 
@@ -98,8 +96,7 @@ contract Exchange is Owned {
         _;
     }
 
-    constructor(address _wethToken, address _rewardAccount) public {
-        wethToken = _wethToken;
+    constructor(address _rewardAccount) public {
         rewardAccount = _rewardAccount;
     }
 
@@ -125,15 +122,6 @@ contract Exchange is Owned {
       if (pairs[pairID].pricepointMultiplier == 0) return false;
 
       return true;
-    }
-
-    /// @dev Sets the address of WETH token.
-    /// @param _wethToken An address to set as WETH token address.
-    /// @return Success on setting WETH token address.
-    function setWethToken(address _wethToken) public onlyOwner returns (bool) {
-        emit LogWethTokenUpdate(wethToken,_wethToken);
-        wethToken = _wethToken;
-        return true;
     }
 
     /// @dev Sets the address of fees account.
