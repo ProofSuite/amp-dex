@@ -100,31 +100,6 @@ contract Exchange is Owned {
         rewardAccount = _rewardAccount;
     }
 
-    function registerPair(address _baseToken, address _quoteToken) public returns (bool) {
-      bytes32 pairID = getPairHash(_baseToken, _quoteToken);
-      uint256 pairMultiplier = (10 ** 18) * (10 ** uint256(ERC20(_baseToken).decimals()));
-      
-      pairs[pairID] = Pair({
-        pairID: pairID,
-        baseToken: _baseToken,
-        quoteToken: _quoteToken,
-        pairMultiplier: pairMultiplier
-      });
-    }
-
-    function getPairMultiplier(address _baseToken, address _quoteToken) public constant returns (uint256) {
-      bytes32 pairID = getPairHash(_baseToken, _quoteToken);
-
-      return pairs[pairID].pairMultiplier;
-    }
-
-    function pairIsRegistered(address _baseToken, address _quoteToken) public constant returns (bool) {
-      bytes32 pairID = getPairHash(_baseToken, _quoteToken);
-      if (pairs[pairID].pairMultiplier == 0) return false;
-
-      return true;
-    }
-
     /// @dev Sets the address of fees account.
     /// @param _rewardAccount An address to set as fees account.
     /// @return Success on setting fees account.
