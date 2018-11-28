@@ -69,7 +69,7 @@ contract Exchange is Owned {
       bytes32 pairID;
       address baseToken;
       address quoteToken;
-      uint256 pricepointMultiplier;
+      uint256 pairMultiplier;
     }
 
     struct Order {
@@ -100,26 +100,27 @@ contract Exchange is Owned {
         rewardAccount = _rewardAccount;
     }
 
-    function registerPair(address _baseToken, address _quoteToken, uint256 _pricepointMultiplier) public onlyOwner returns (bool) {
+    function registerPair(address _baseToken, address _quoteToken) public returns (bool) {
       bytes32 pairID = getPairHash(_baseToken, _quoteToken);
-
+      uint256 pairMultiplier = (10 ** 18) * (10 ** uint256(ERC20(_baseToken).decimals()));
+      
       pairs[pairID] = Pair({
         pairID: pairID,
         baseToken: _baseToken,
         quoteToken: _quoteToken,
-        pricepointMultiplier: _pricepointMultiplier
+        pairMultiplier: pairMultiplier
       });
     }
 
-    function getPairPricepointMultiplier(address _baseToken, address _quoteToken) public constant returns (uint256) {
+    function getPairMultiplier(address _baseToken, address _quoteToken) public constant returns (uint256) {
       bytes32 pairID = getPairHash(_baseToken, _quoteToken);
 
-      return pairs[pairID].pricepointMultiplier;
+      return pairs[pairID].pairMultiplier;
     }
 
     function pairIsRegistered(address _baseToken, address _quoteToken) public constant returns (bool) {
       bytes32 pairID = getPairHash(_baseToken, _quoteToken);
-      if (pairs[pairID].pricepointMultiplier == 0) return false;
+      if (pairs[pairID].pairMultiplier == 0) return false;
 
       return true;
     }
@@ -127,7 +128,7 @@ contract Exchange is Owned {
     /// @dev Sets the address of fees account.
     /// @param _rewardAccount An address to set as fees account.
     /// @return Success on setting fees account.
-    function setFeeAccount(address _rewardAccount) public onlyOwner returns (bool) {
+    function setRewardAccount(address _rewardAccount) public onlyOwner returns (bool) {
         require(_rewardAccount != address(0));
         emit LogRewardAccountUpdate(rewardAccount,_rewardAccount);
         rewardAccount = _rewardAccount;
@@ -166,12 +167,10 @@ contract Exchange is Owned {
 
         if (!valid) return false;
 
-        uint256 pricepointMultiplier = validatePair(orderAddresses[i]);
         var (makerOrderHash, takerOrderHash, traded) = executeTrade(
           orderValues[i],
           orderAddresses[i],
-          amounts[i],
-          pricepointMultiplier
+          amounts[i]
         );
 
         if (traded) {
@@ -212,12 +211,10 @@ contract Exchange is Owned {
 
       if (!valid) return false;
 
-      uint256 pricepointMultiplier = validatePair(orderAddresses);
       executeTrade(
         orderValues,
         orderAddresses,
-        amount,
-        pricepointMultiplier
+        amount
       );
 
       paySingleTradeTakerFees(
@@ -226,16 +223,6 @@ contract Exchange is Owned {
         amount
       );
     }
-
-    function validatePair(
-      address[4] orderAddresses
-    ) internal returns (uint256) {
-      bytes32 pairID = getPairHash(orderAddresses[2], orderAddresses[3]);
-      Pair memory pair = pairs[pairID];
-
-      return pair.pricepointMultiplier;
-    }
-
 
     function validateSignatures(
       uint256[10] orderValues,
@@ -290,8 +277,7 @@ contract Exchange is Owned {
     function executeTrade(
         uint256[10] orderValues,
         address[4] orderAddresses,
-        uint256 amount,
-        uint256 pricepointMultiplier
+        uint256 amount
     ) public onlyOperator returns (bytes32, bytes32, bool)
     {
         Order memory makerOrder = Order({
@@ -354,8 +340,9 @@ contract Exchange is Owned {
         filled[takerOrderHash] = (filled[takerOrderHash].add(amount));
         filled[makerOrderHash] = (filled[makerOrderHash].add(amount));
 
+        uint256 pairMultiplier = (10 ** 18) * (10 ** uint256(ERC20(makerOrder.baseToken).decimals()));
         uint256 baseTokenAmount = amount;
-        uint256 quoteTokenAmount = (amount.mul(makerOrder.pricepoint)).div(pricepointMultiplier);
+        uint256 quoteTokenAmount = (amount.mul(makerOrder.pricepoint)).div(pairMultiplier);
         uint256 fee = getPartialAmount(amount, makerOrder.amount, makerOrder.feeMake);
 
         if (makerOrder.side == 0) {

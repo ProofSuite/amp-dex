@@ -9,10 +9,10 @@
   * [executeTrade](#function-executetrade)
   * [filled](#function-filled)
   * [cancelTrade](#function-canceltrade)
-  * [setFeeAccount](#function-setfeeaccount)
+  * [setRewardAccount](#function-setfeeaccount)
   * [wethToken](#function-wethtoken)
   * [setOperator](#function-setoperator)
-  * [feeAccount](#function-feeaccount)
+  * [rewardAccount](#function-feeaccount)
   * [isValidSignature](#function-isvalidsignature)
   * [setWethToken](#function-setwethtoken)
   * [owner](#function-owner)
@@ -21,7 +21,7 @@
   * [cancelOrder](#function-cancelorder)
   * [VERSION](#function-version)
   * [LogWethTokenUpdate](#event-logwethtokenupdate)
-  * [LogFeeAccountUpdate](#event-logfeeaccountupdate)
+  * [LogRewardAccountUpdate](#event-logfeeaccountupdate)
   * [LogOperatorUpdate](#event-logoperatorupdate)
   * [LogTrade](#event-logtrade)
   * [LogError](#event-logerror)
@@ -151,9 +151,9 @@ Outputs
 |-|-|-|
 | *bool* |  | undefined |
 
-## *function* setFeeAccount
+## *function* setRewardAccount
 
-Exchange.setFeeAccount(_feeAccount) `nonpayable` `4b023cf8`
+Exchange.setRewardAccount(_rewardAccount) `nonpayable` `4b023cf8`
 
 > Sets the address of fees account.
 
@@ -161,7 +161,7 @@ Inputs
 
 | **type** | **name** | **description** |
 |-|-|-|
-| *address* | _feeAccount | An address to set as fees account. |
+| *address* | _rewardAccount | An address to set as fees account. |
 
 Outputs
 
@@ -196,9 +196,9 @@ Outputs
 |-|-|-|
 | *bool* |  | undefined |
 
-## *function* feeAccount
+## *function* rewardAccount
 
-Exchange.feeAccount() `view` `65e17c9d`
+Exchange.rewardAccount() `view` `65e17c9d`
 
 
 
@@ -325,16 +325,16 @@ Arguments
 | *address* | oldWethToken | not indexed |
 | *address* | newWethToken | not indexed |
 
-## *event* LogFeeAccountUpdate
+## *event* LogRewardAccountUpdate
 
-Exchange.LogFeeAccountUpdate(oldFeeAccount, newFeeAccount) `f822f5a1`
+Exchange.LogRewardAccountUpdate(oldRewardAccount, newRewardAccount) `f822f5a1`
 
 Arguments
 
 | **type** | **name** | **description** |
 |-|-|-|
-| *address* | oldFeeAccount | not indexed |
-| *address* | newFeeAccount | not indexed |
+| *address* | oldRewardAccount | not indexed |
+| *address* | newRewardAccount | not indexed |
 
 ## *event* LogOperatorUpdate
 

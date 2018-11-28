@@ -15,7 +15,7 @@ It provides the facility to exchange ERC20 tokens. Quick glance at contract func
 | Function            | Description                      |
 | ------------------- | -------------------------------- |
 | setWethToken        | Allows owner to set a given address as WETH token. WETH token are accepted as fees for executed trades.|
-| setFeeAccount       | Allows owner to set a given address as fees account. All the fees received in executed trades will be deposited in this address.|
+| setRewardAccount       | Allows owner to set a given address as fees account. All the fees received in executed trades will be deposited in this address.|
 | setOperator         | Allows owner to set/unset a given address as exchange operator. Operator's have the ablity to access 'executeTrade' functions & settle orders.|
 | executeTrade        | Allows owner/operator to settle matched order between a maker & taker on chain.|
 | cancelOrder         | Allows maker to cancel an input order.|
