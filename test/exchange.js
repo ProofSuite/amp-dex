@@ -65,7 +65,6 @@ contract('Exchange', (accounts) => {
       let initializedRewardAccount = await exchange.rewardAccount.call()
       initializedRewardAccount.should.be.equal(rewardAccount)
     })
-
   })
 
   describe('Operator management', async () => {
